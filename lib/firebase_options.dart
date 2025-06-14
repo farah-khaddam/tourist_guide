@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -59,4 +56,14 @@ class DefaultFirebaseOptions {
     projectId: 'tourist-guide-app-f3578',
     storageBucket: 'tourist-guide-app-f3578.firebasestorage.app',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyARO1miKvFH4CgFS_OF1vgM7-ILChu2UDE',
+    appId: '1:392425875226:web:7cc7244e7792ae17ebeea3',
+    messagingSenderId: '392425875226',
+    projectId: 'tourist-guide-app-f3578',
+    authDomain: 'tourist-guide-app-f3578.firebaseapp.com',
+    storageBucket: 'tourist-guide-app-f3578.firebasestorage.app',
+  );
+
 }
