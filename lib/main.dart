@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'login_screen.dart';
+import 'home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -9,7 +10,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
    print("✅ Firebase initialized");
-  runApp(MyApp());
+  runApp(MaterialApp(
+  debugShowCheckedModeBanner: false,
+  home: HomePage()));
 }
 
 class MyApp extends StatelessWidget {
@@ -19,7 +22,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
     debugShowCheckedModeBanner: false,
       title: 'Tourist Guide',
-      home: LoginScreen(),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
