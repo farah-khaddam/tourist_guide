@@ -1,7 +1,10 @@
+// home_page.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 import 'location_details_page.dart';
 import 'login_screen.dart';
+import 'map_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,32 +14,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // إشعارات تجريبية
-  final List<Map<String, String>> notifications = [
-    {
-      'title': 'تم إضافة موقع جديد',
-      'body': 'تمت إضافة موقع "قلعة صلاح الدين".',
-      'time': 'منذ دقيقة'
-    },
-    {
-      'title': 'تحديث بيانات',
-      'body': 'تم تحديث بيانات موقع "سد بلوران".',
-      'time': 'منذ 10 دقائق'
-    },
-    {
-      'title': 'عرض خاص',
-      'body': 'احصل على خصم 20% عند زيارة "المتحف الوطني".',
-      'time': 'اليوم'
-    },
-  ];
-
-  // متغيرات القوائم المنسدلة
   String? selectedGovernorate;
-  String? selectedNearby;
   String? selectedType;
+  double? selectedRadius;
   bool isGovernorateExpanded = false;
 
-  ///TODO معالجة المحافظات والابعاد ونوع المعلَم السياحي
   final List<String> governorates = [
     'الكل',
     'دمشق',
@@ -48,393 +30,200 @@ class _HomePageState extends State<HomePage> {
     'درعا',
     'السويداء',
     'دير الزور',
+    'ريف دمشق',
     'الرقة',
     'الحسكة',
-  ];
-  final List<String> nearbyOptions = [
-    'الكل',
-    '5 كم',
-    '10 كم',
-    '20 كم',
-  ];
-  final List<String> types = [
-    'الكل',
-    'تاريخي',
-    'طبيعي',
-    'ثقافي',
-    'ديني',
+    'القنيطرة',
+    'ادلب',
   ];
 
-  void _showNotificationsPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'الإشعارات',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 300,
-                  width: double.infinity,
-                  child: notifications.isEmpty
-                      ? const Center(child: Text('لا توجد إشعارات حالياً.'))
-                      : ListView.builder(
-                          itemCount: notifications.length,
-                          itemBuilder: (context, index) {
-                            ///TODO معالجة الاشعارات
-                            final notif = notifications[index];
-                            return Card(
-                              elevation: 2,
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              child: ListTile(
-                                leading: const Icon(Icons.notifications,
-                                    color: Colors.teal),
-                                title: Text(
-                                  notif['title'] ?? '',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(notif['body'] ?? ''),
-                                trailing: Text(
-                                  notif['time'] ?? '',
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Colors.grey),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child:
-                      const Text('إغلاق', style: TextStyle(color: Colors.teal)),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  final List<String> types = ['الكل', 'تاريخي', 'طبيعي', 'ثقافي', 'ديني'];
+
+  final List<Map<String, dynamic>> radiusOptions = [
+    {'label': '5 كم', 'value': 5.0},
+    {'label': '10 كم', 'value': 10.0},
+    {'label': '20 كم', 'value': 20.0},
+  ];
+
+  Future<void> _openMapWithRadius(double radiusKm) async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => MapScreen(initialRadius: radiusKm)),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("يرجى السماح باستخدام الموقع لعرض الخريطة.")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        foregroundColor: Colors.white,
-        title: const Text(
-          'المواقع السياحية',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
+        title: const Text('المواقع السياحية'),
         backgroundColor: Colors.teal,
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.notifications,
-            ),
-            tooltip: 'الإشعارات',
-            onPressed: () {
-              _showNotificationsPopup(context);
-            },
-          ),
-
-          ///TODO تحقق اذا المستخدم مسجل دخول
-          ///عرض الايقونة بناء على النتيجة
-          IconButton(
-            icon: const Icon(
-              Icons.login,
-              // color: Colors.white,
-            ),
-            tooltip: 'تسجيل دخول',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
-              );
-            },
-          ),
+            icon: const Icon(Icons.login),
+            onPressed: () => Navigator.push(
+                context, MaterialPageRoute(builder: (_) => LoginScreen())),
+          )
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('location').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('لا توجد مواقع حالياً.'));
-          }
-
-          final locations = snapshot.data!.docs;
-
-          return Column(
-            children: [
-              Container(
-                height: 64,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        borderRadius: BorderRadius.circular(24),
-                        value: selectedNearby,
-                        decoration: const InputDecoration(
-                          labelText: 'المواقع القريبة',
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: Colors.teal, width: 2),
-                          ),
-                          focusColor: Colors.teal,
-                        ),
-                        items: nearbyOptions
-                            .map((n) => DropdownMenuItem(
-                                  value: n,
-                                  child: Text(n),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            ///TODO تم اختيار مسافة لعرض مواقع قريبة
-                            selectedNearby = val;
-                          });
-                        },
-                        hint: const Text('المسافة'),
-                      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: selectedType,
+                    decoration: const InputDecoration(
+                      labelText: 'نوع المعلم',
+                      border: OutlineInputBorder(),
                     ),
-                    const SizedBox(width: 8),
-                    // نوع المعلم
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        borderRadius: BorderRadius.circular(24),
-                        value: selectedType,
-                        decoration: const InputDecoration(
-                          labelText: 'نوع المعلم',
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: Colors.teal, width: 2),
-                          ),
-                          focusColor: Colors.teal,
-                        ),
-                        items: types
-                            .map((t) => DropdownMenuItem(
-                                  value: t,
-                                  child: Text(t),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            ///TODO تم اختيار نوع المعلم
-                            selectedType = val;
-                          });
-                        },
-                        hint: const Text('نوع المعلم'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(
-                color: Colors.teal,
-              ),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    isGovernorateExpanded = !isGovernorateExpanded;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                  height: isGovernorateExpanded ? 220 : 48,
-                  width: double.infinity,
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.teal, width: 1.5),
-                    boxShadow: isGovernorateExpanded
-                        ? [
-                            BoxShadow(
-                              color: Colors.teal.withOpacity(0.15),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            )
-                          ]
-                        : [],
+                    items: types
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (val) => setState(() => selectedType = val),
                   ),
-                  child: isGovernorateExpanded
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'اختر المحافظة',
-                              style: TextStyle(
-                                color: Colors.teal,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                child: Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: governorates.map((g) {
-                                    final isSelected = selectedGovernorate == g;
-                                    return SizedBox(
-                                      width: 100,
-                                      child: ChoiceChip(
-                                        label: Text(g,
-                                            overflow: TextOverflow.ellipsis),
-                                        selected: isSelected,
-                                        selectedColor: Colors.teal,
-                                        labelStyle: TextStyle(
-                                          color: isSelected
-                                              ? Colors.white
-                                              : Colors.teal,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        backgroundColor: Colors.white,
-                                        showCheckmark: false,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          side: BorderSide(
-                                            color: isSelected
-                                                ? Colors.teal
-                                                : Colors.teal.shade200,
-                                          ),
-                                        ),
-                                        onSelected: (_) {
-                                          setState(() {
-                                            selectedGovernorate = g;
-                                            isGovernorateExpanded = false;
-
-                                            ///TODO تم اختيار المحافظة
-                                          });
-                                        },
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.location_city,
-                                color: Colors.teal.shade400),
-                            const SizedBox(width: 8),
-                            Text(
-                              selectedGovernorate != null
-                                  ? 'المحافظة: $selectedGovernorate'
-                                  : 'اختر المحافظة',
-                              style: const TextStyle(
-                                color: Colors.teal,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              isGovernorateExpanded
-                                  ? Icons.keyboard_arrow_up
-                                  : Icons.keyboard_arrow_down,
-                              color: Colors.teal,
-                            ),
-                          ],
-                        ),
                 ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: DropdownButtonFormField<double>(
+                    value: selectedRadius,
+                    decoration: const InputDecoration(
+                      labelText: 'المواقع القريبة',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: radiusOptions.map((option) {
+                      return DropdownMenuItem<double>(
+                        value: option['value'],
+                        child: Text(option['label']),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() => selectedRadius = val);
+                        _openMapWithRadius(val);
+                      }
+                    },
+                    hint: const Text('اختر المسافة'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () =>
+                setState(() => isGovernorateExpanded = !isGovernorateExpanded),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.teal),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.teal.withOpacity(0.05),
               ),
-              const Divider(
-                color: Colors.teal,
-              ),
-              Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
+              child: isGovernorateExpanded
+                  ? Wrap(
+                      spacing: 8,
+                      children: governorates.map((g) {
+                        final selected = selectedGovernorate == g;
+                        return ChoiceChip(
+                          label: Text(g),
+                          selected: selected,
+                          selectedColor: Colors.teal,
+                          labelStyle: TextStyle(
+                              color: selected ? Colors.white : Colors.teal),
+                          onSelected: (_) {
+                            setState(() {
+                              selectedGovernorate = g;
+                              isGovernorateExpanded = false;
+                            });
+                          },
+                        );
+                      }).toList(),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.location_city, color: Colors.teal),
+                        const SizedBox(width: 8),
+                        Text(
+                          selectedGovernorate ?? 'اختر المحافظة',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.teal),
+                        ),
+                        const Icon(Icons.arrow_drop_down, color: Colors.teal),
+                      ],
+                    ),
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance.collection('location').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData)
+                  return const Center(child: CircularProgressIndicator());
+
+                final docs = snapshot.data!.docs;
+                final locations = docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final governorate = data['governorate'];
+                  final type = data['type'];
+                  return (selectedGovernorate == null ||
+                          selectedGovernorate == 'الكل' ||
+                          governorate == selectedGovernorate) &&
+                      (selectedType == null ||
+                          selectedType == 'الكل' ||
+                          type == selectedType);
+                }).toList();
+
+                return ListView.builder(
                   itemCount: locations.length,
                   itemBuilder: (context, index) {
                     final doc = locations[index];
                     final data = doc.data() as Map<String, dynamic>;
-
                     final imageUrl = data['ImageUrl'] ?? '';
                     final name = data['name'] ?? 'بدون اسم';
 
                     return ListTile(
                       leading: imageUrl.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                imageUrl,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                              ),
-                            )
+                          ? Image.network(imageUrl,
+                              width: 50, height: 50, fit: BoxFit.cover)
                           : const Icon(Icons.location_on,
-                              color: Colors.teal, size: 40),
-                      title: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  LocationDetailsPage(locationId: doc.id),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          name,
+                              size: 40, color: Colors.teal),
+                      title: Text(name,
                           style: const TextStyle(
-                            color: Colors.teal,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                            fontSize: 18,
-                          ),
-                        ),
+                              color: Colors.teal, fontWeight: FontWeight.bold)),
+                      subtitle: Text(data['governorate'] ?? ''),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                LocationDetailsPage(locationId: doc.id)),
                       ),
-                      subtitle: Text(data['governorate'] ?? 'غير محددة'),
                     );
                   },
-                ),
-              ),
-            ],
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

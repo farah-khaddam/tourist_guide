@@ -1,3 +1,4 @@
+// splash_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:tourist_guide/home_page.dart';
@@ -57,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   size: 200,
                 ),
                 const Text(
-                  "دليلك نحو ..",
+                  "  دليلك نحوأجمل معالم سوريا",
                   style: TextStyle(
                       color: Colors.teal,
                       fontSize: 24,
