@@ -7,15 +7,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MapScreen extends StatefulWidget {
   final double initialRadius; // بالكيلومتر
-  const MapScreen({super.key, required this.initialRadius});
+  final LatLng? oldPoint;
+  final bool justForShow;
+
+  const MapScreen({
+    super.key,
+    required this.initialRadius,
+    this.oldPoint,
+    this.justForShow = false,
+  });
 
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
+  final MapController _mapController = MapController();
+
   Position? userLocation;
   List<Marker> nearbyMarkers = [];
+  LatLng? _pickedLocation;
+  double zoom = 13.0;
 
   @override
   void initState() {
@@ -75,17 +87,27 @@ class _MapScreenState extends State<MapScreen> {
       body: userLocation == null
           ? const Center(child: CircularProgressIndicator())
           : FlutterMap(
+              mapController: _mapController,
               options: MapOptions(
-                center: LatLng(userLocation!.latitude, userLocation!.longitude),
-                zoom: 13,
+                initialCenter: widget.oldPoint ??
+                    LatLng(userLocation!.latitude, userLocation!.longitude),
+                initialZoom: zoom,
+                onTap: (tapPosition, point) {
+                  if (!widget.justForShow) {
+                    setState(() {
+                      _pickedLocation = point;
+                    });
+                  }
+                },
               ),
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.tourist_guide',
+                  userAgentPackageName: 'com.yasuriaapp.ya_suria',
                 ),
                 MarkerLayer(
                   markers: [
+                    // Marker المستخدم
                     Marker(
                       width: 60,
                       height: 60,
@@ -94,6 +116,16 @@ class _MapScreenState extends State<MapScreen> {
                       child: const Icon(Icons.person_pin_circle,
                           size: 50, color: Colors.blue),
                     ),
+                    // Marker الموقع المختار
+                    if (_pickedLocation != null)
+                      Marker(
+                        width: 80.0,
+                        height: 80.0,
+                        point: _pickedLocation!,
+                        child: const Icon(Icons.location_on,
+                            size: 40, color: Colors.green),
+                      ),
+                    // Markers المعالم القريبة
                     ...nearbyMarkers,
                   ],
                 ),

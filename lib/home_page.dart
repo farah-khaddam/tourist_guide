@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'location_details_page.dart';
 import 'login_screen.dart';
 import 'map_screen.dart';
+import 'testscreen.dart'; // استيراد شاشة إضافة معلم
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -73,6 +74,13 @@ class _HomePageState extends State<HomePage> {
         title: const Text('المواقع السياحية'),
         backgroundColor: Colors.teal,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add_location_alt),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => AddLandmarkScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.login),
             onPressed: () => Navigator.push(

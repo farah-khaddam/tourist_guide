@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.tourist_guide"
+    namespace = "com.yasuriaapp.ya_suria"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
