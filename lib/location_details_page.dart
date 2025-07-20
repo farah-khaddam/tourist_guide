@@ -38,7 +38,7 @@ class LocationDetailsPage extends StatelessWidget {
           final governorate = data['governorate'] ?? 'غير محددة';
           final latitude = (data['latitude'] ?? 0.0).toDouble();
           final longitude = (data['longitude'] ?? 0.0).toDouble();
-          final imageUrl = data['ImageUrl'] ?? '';
+          final imageUrl = data['imageUrl'] ?? '';
 
           return Directionality(
             textDirection: TextDirection.rtl,

@@ -26,16 +26,14 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
       try {
         final user = FirebaseAuth.instance.currentUser;
 
-        await FirebaseFirestore.instance.collection('landmarks').add({
+        await FirebaseFirestore.instance.collection('location').add({
           'name': _nameController.text,
           'description': _descriptionController.text,
-          'city': _cityController.text,
+          'governorate': _cityController.text,
           'type': _typeController.text,
           'imageUrl': _imageUrlController.text,
-          'location': {
-            'lat': double.tryParse(_latController.text) ?? 0.0,
-            'lng': double.tryParse(_lngController.text) ?? 0.0,
-          },
+          'latitude': double.tryParse(_latController.text) ?? 0.0,
+          'longitude': double.tryParse(_lngController.text) ?? 0.0,
           'createdAt': Timestamp.now(),
           'createdBy': user?.uid ?? 'admin',
         });
