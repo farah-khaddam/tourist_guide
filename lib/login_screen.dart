@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tourist_guide/home_page.dart';
 import 'package:tourist_guide/register_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tourist_guide/admin_dashboard.dart';
 
 class LoginScreen extends StatelessWidget {
   TextEditingController email = TextEditingController();
@@ -106,17 +108,32 @@ class LoginScreen extends StatelessWidget {
                           email: email.text,
                           password: password.text,
                         );
-                        showSnackBar(context, "Welcome!");
-                        Future.delayed(const Duration(milliseconds: 500));
-                        Navigator.pushReplacement(
+                        QuerySnapshot snapshot = await FirebaseFirestore
+                            .instance
+                            .collection('user')
+                            .where('email', isEqualTo: email.text.trim())
+                            .get();
+                        if (snapshot.docs.isNotEmpty) {
+                          final data = snapshot.docs.first.data()
+                              as Map<String, dynamic>;
+                          final isAdmin = data['isAdmin'] ?? false;
+                          showSnackBar(context, "مرحبًا!");
+                          await Future.delayed(
+                              const Duration(milliseconds: 500));
+
+                          Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => const HomePage(),
-                            ));
-                        print('Logged in: ${userCredential.user?.email}');
+                            MaterialPageRoute(builder: (context) => const HomePage()),
+                          );
+
+                        } else {
+                          showSnackBar(context,
+                              "لم يتم العثور على بيانات المستخدم في النظام.");
+                        }
                       }
                     } catch (e) {
-                      showSnackBar(context, e.toString());
+                      showSnackBar(
+                          context, "فشل تسجيل الدخول: ${e.toString()}");
                       print('Failed to login : $e');
                     }
                   },

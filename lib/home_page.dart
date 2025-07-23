@@ -1,11 +1,13 @@
 // home_page.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'location_details_page.dart';
 import 'login_screen.dart';
 import 'map_screen.dart';
-import 'testscreen.dart'; // استيراد شاشة إضافة معلم
+import 'testscreen.dart';
+import 'package:tourist_guide/admin_dashboard.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,6 +21,29 @@ class _HomePageState extends State<HomePage> {
   String? selectedType;
   double? selectedRadius;
   bool isGovernorateExpanded = false;
+  bool isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    checkIfAdmin();
+  }
+
+  Future<void> checkIfAdmin() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('user')
+          .doc(user.uid)
+          .get();
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data != null && data['isAdmin'] == true) {
+        setState(() {
+          isAdmin = true;
+        });
+      }
+    }
+  }
 
   final List<String> governorates = [
     'الكل',
@@ -74,13 +99,16 @@ class _HomePageState extends State<HomePage> {
         title: const Text('المواقع السياحية'),
         backgroundColor: Colors.teal,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_location_alt),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => AddLandmarkScreen()),
-            ),
-          ),
+          if (isAdmin)
+            IconButton(
+                icon: const Icon(Icons.admin_panel_settings),
+                tooltip: 'لوحة التحكم',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AdminDashboard()),
+                  );
+                }),
           IconButton(
             icon: const Icon(Icons.login),
             onPressed: () => Navigator.push(
@@ -180,6 +208,27 @@ class _HomePageState extends State<HomePage> {
                     ),
             ),
           ),
+         /* if (isAdmin)
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AdminDashboard()),
+                  );
+                },
+                icon: const Icon(Icons.admin_panel_settings),
+                label: const Text('الذهاب إلى لوحة تحكم الادمن'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                ),
+              ),
+            ),*/
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream:
