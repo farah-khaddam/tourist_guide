@@ -1,13 +1,16 @@
 // ignore_for_file: unused_local_variable
-
 import 'package:flutter/material.dart';
 import 'package:tourist_guide/home_page.dart';
 import 'package:tourist_guide/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterScreen extends StatelessWidget {
   RegisterScreen({super.key});
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  TextEditingController nameController = TextEditingController();
+
   static GlobalKey<FormState> formkey = GlobalKey();
   @override
   Widget build(BuildContext context) {
@@ -30,6 +33,20 @@ class RegisterScreen extends StatelessWidget {
             key: formkey,
             child: Column(
               children: [
+                TextFormField(
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'هذا الحقل مطلوب';
+                    }
+                    return null;
+                  },
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'الاسم',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   validator: (value) {
                     if (value == '' || value == null) {
@@ -70,9 +87,25 @@ class RegisterScreen extends StatelessWidget {
                       if (formkey.currentState!.validate()) {
                         String email = emailController.text;
                         String password = passwordController.text;
+                        String name = nameController.text;
 
                         ///TODO ربط انشاء حساب
+                        UserCredential userCredential = await FirebaseAuth
+                            .instance
+                            .createUserWithEmailAndPassword(
+                          email: email,
+                          password: password,
+                        );
 
+                        await FirebaseFirestore.instance
+                            .collection('user')
+                            .doc(userCredential.user!.uid)
+                            .set({
+                          'email': email,
+                          'name': name,
+                          'isAdmin': false, 
+                          'createdAt': FieldValue.serverTimestamp(),
+                        });
                         showSnackBar(context, "Welcome!");
                         Future.delayed(const Duration(milliseconds: 500));
                         Navigator.pushReplacement(
