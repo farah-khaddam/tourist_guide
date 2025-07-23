@@ -6,6 +6,7 @@ import 'location_details_page.dart';
 import 'login_screen.dart';
 import 'map_screen.dart';
 import 'testscreen.dart'; // استيراد شاشة إضافة معلم
+import 'EditLandmarkScreen.dart'; // استيراد شاشة تعديل المعلم
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -185,8 +186,9 @@ class _HomePageState extends State<HomePage> {
               stream:
                   FirebaseFirestore.instance.collection('location').snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData)
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
+                }
 
                 final docs = snapshot.data!.docs;
                 final locations = docs.where((doc) {
@@ -201,7 +203,15 @@ class _HomePageState extends State<HomePage> {
                           type == selectedType);
                 }).toList();
 
-                return ListView.builder(
+                return GridView.builder(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 3 / 4,
+                  ),
                   itemCount: locations.length,
                   itemBuilder: (context, index) {
                     final doc = locations[index];
@@ -209,21 +219,87 @@ class _HomePageState extends State<HomePage> {
                     final imageUrl = data['imageUrl'] ?? '';
                     final name = data['name'] ?? 'بدون اسم';
 
-                    return ListTile(
-                      leading: imageUrl.isNotEmpty
-                          ? Image.network(imageUrl,
-                              width: 50, height: 50, fit: BoxFit.cover)
-                          : const Icon(Icons.location_on,
-                              size: 40, color: Colors.teal),
-                      title: Text(name,
-                          style: const TextStyle(
-                              color: Colors.teal, fontWeight: FontWeight.bold)),
-                      subtitle: Text(data['governorate'] ?? ''),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                LocationDetailsPage(locationId: doc.id)),
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      elevation: 3,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  LocationDetailsPage(locationId: doc.id),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: imageUrl.isNotEmpty
+                                      ? Image.network(
+                                          imageUrl,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder:
+                                              (context, child, progress) {
+                                            if (progress == null) return child;
+                                            return const Center(
+                                                child:
+                                                    CircularProgressIndicator());
+                                          },
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return const Center(
+                                                child:
+                                                    Icon(Icons.broken_image));
+                                          },
+                                        )
+                                      : const Icon(Icons.location_on,
+                                          size: 60, color: Colors.teal),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                    color: Colors.teal,
+                                    fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                data['governorate'] ?? '',
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit,
+                                        color: Colors.teal),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              EditLandmarkScreen(landmark: doc),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },

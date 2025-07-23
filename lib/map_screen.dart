@@ -45,7 +45,7 @@ class _MapScreenState extends State<MapScreen> {
     final snapshot =
         await FirebaseFirestore.instance.collection('location').get();
     final docs = snapshot.docs;
-    final Distance distance = const Distance();
+    const Distance distance = Distance();
 
     final filtered = docs.where((doc) {
       final data = doc.data();
@@ -103,7 +103,7 @@ class _MapScreenState extends State<MapScreen> {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.yasuriaapp.ya_suria',
+                  userAgentPackageName: 'com.example.tourist_guide',
                 ),
                 MarkerLayer(
                   markers: [
