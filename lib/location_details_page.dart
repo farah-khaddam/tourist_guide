@@ -29,46 +29,6 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     super.dispose();
   }
 
-  Future<void> _deleteLandmark() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('تأكيد الحذف'),
-        content: const Text('هل أنت متأكد من حذف هذا المعلم؟'),
-        actions: [
-          TextButton(
-            child: const Text('إلغاء'),
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          TextButton(
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('location')
-            .doc(widget.locationId)
-            .delete();
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم حذف المعلم بنجاح')),
-          );
-          Navigator.of(context).pop();
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ أثناء الحذف: $e')),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,13 +37,6 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _deleteLandmark,
-            tooltip: 'حذف المعلم',
-          ),
-        ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance

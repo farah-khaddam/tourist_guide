@@ -89,13 +89,47 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم تحديث المعلم بنجاح')),
         );
-        Navigator.pop(context); // رجوع للشاشة السابقة
+        Navigator.pop(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('خطأ أثناء التحديث: $e')),
         );
       } finally {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _deleteLandmark() async {
+    final confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('تأكيد الحذف'),
+        content: const Text('هل أنت متأكد من حذف هذا المعلم؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await widget.landmark.reference.delete();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم حذف المعلم بنجاح')),
+        );
+        Navigator.pop(context); // خروج من شاشة التعديل
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطأ أثناء الحذف: $e')),
+        );
       }
     }
   }
@@ -137,7 +171,8 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                 ),
                 TextFormField(
                   controller: _tripInfoController,
-                  decoration: const InputDecoration(labelText: 'معلومات عن الرحلات'),
+                  decoration:
+                      const InputDecoration(labelText: 'معلومات عن الرحلات'),
                 ),
                 const SizedBox(height: 10),
                 ..._imageControllers.asMap().entries.map((entry) {
@@ -159,7 +194,8 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                               _imageControllers.removeAt(index);
                             });
                           },
-                          icon: const Icon(Icons.remove_circle, color: Colors.red),
+                          icon: const Icon(Icons.remove_circle,
+                              color: Colors.red),
                         ),
                     ],
                   );
@@ -178,7 +214,8 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: _latController,
-                        decoration: const InputDecoration(labelText: 'Latitude'),
+                        decoration:
+                            const InputDecoration(labelText: 'Latitude'),
                         keyboardType: TextInputType.number,
                       ),
                     ),
@@ -186,7 +223,8 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: _lngController,
-                        decoration: const InputDecoration(labelText: 'Longitude'),
+                        decoration:
+                            const InputDecoration(labelText: 'Longitude'),
                         keyboardType: TextInputType.number,
                       ),
                     ),
@@ -199,6 +237,12 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                         onPressed: _updateLandmark,
                         child: const Text('تحديث المعلم'),
                       ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: _deleteLandmark,
+                  child: const Text('حذف المعلم'),
+                ),
               ],
             ),
           ),
