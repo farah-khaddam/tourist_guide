@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:tourist_guide/login_screen.dart'; 
 
 class LocationDetailsPage extends StatefulWidget {
   final String locationId;
@@ -38,6 +38,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     _pageController.dispose();
     super.dispose();
   }
+
 
 
 void checkIfBookmarked() async {
@@ -76,6 +77,83 @@ Future<void> removeBookmark(String userId, String locationId) async {
     await doc.reference.delete();
   }
 }
+
+
+  Future<void> submitRating(int rating) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // المستخدم غير مسجل - لا نفذ التقييم مباشرة
+      return;
+    }
+
+    await FirebaseFirestore.instance
+        .collection('location')
+        .doc(widget.locationId)
+        .collection('ratings')
+        .doc(user.uid)
+        .set({'rating': rating});
+  }
+
+  void onStarPressed(int rating) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // عرض نافذة حوار تطلب تسجيل الدخول
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('مطلوب تسجيل الدخول'),
+          content: const Text('يجب أن تكون مسجل دخول لتقييم هذا المعلم.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(), // إلغاء النافذة
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // إغلاق النافذة
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => LoginScreen()));
+              },
+              child: const Text('تسجيل دخول'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // المستخدم مسجل، نفذ التقييم
+      submitRating(rating).then((_) {
+        setState(() {});
+      });
+    }
+  }
+
+  Future<Map<String, dynamic>> getRatingStats() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('location')
+        .doc(widget.locationId)
+        .collection('ratings')
+        .get();
+
+    int total = 0, sum = 0, positive = 0, negative = 0;
+
+    for (var doc in snapshot.docs) {
+      int r = doc['rating'];
+      sum += r;
+      total++;
+      if (r >= 4) positive++;
+      if (r <= 2) negative++;
+    }
+
+    double avg = total > 0 ? sum / total : 0.0;
+
+    return {
+      'average': avg,
+      'total': total,
+      'positive': positive,
+      'negative': negative,
+    };
+  }
 
 
   @override
@@ -149,41 +227,118 @@ Future<void> removeBookmark(String userId, String locationId) async {
                     Card(
                       elevation: 4,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(name,
-                                style: const TextStyle(
-                                    fontSize: 22, fontWeight: FontWeight.bold)),
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Row(
                               children: [
-                                const Icon(Icons.location_on,
-                                    color: Colors.teal),
+                                const Icon(
+                                  Icons.location_on,
+                                  color: Colors.teal,
+                                ),
                                 const SizedBox(width: 6),
-                                Text(governorate,
-                                    style: const TextStyle(fontSize: 16)),
+                                Text(
+                                  governorate,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 12),
-                            const Text('الوصف:',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.w600)),
+                            const Text(
+                              'الوصف:',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 6),
-                            Text(description,
-                                style: const TextStyle(fontSize: 16)),
+                            Text(
+                              description,
+                              style: const TextStyle(fontSize: 16),
+                            ),
                           ],
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
+                    FutureBuilder<Map<String, dynamic>>(
+                      future: getRatingStats(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData)
+                          return const CircularProgressIndicator();
+                        final stats = snapshot.data!;
+                        final avg = stats['average'] as double;
+                        final total = stats['total'];
+                        final positive = stats['positive'];
+                        final negative = stats['negative'];
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "تقييم المستخدمين:",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Row(
+                              children: List.generate(5, (index) {
+                                return Icon(
+                                  index < avg.round()
+                                      ? Icons.star
+                                      : Icons.star_border,
+                                  color: Colors.amber,
+                                );
+                              }),
+                            ),
+                            Text("المتوسط: ${avg.toStringAsFixed(1)} / 5"),
+                            Text("عدد الإيجابيين: $positive"),
+                            Text("عدد السلبيين: $negative"),
+                            const SizedBox(height: 8),
+                            const Text(
+                              "قيّم هذا المعلم:",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Row(
+                              children: List.generate(5, (index) {
+                                return IconButton(
+                                  icon: const Icon(
+                                    Icons.star_border,
+                                    color: Colors.teal,
+                                  ),
+                                  onPressed: () {
+                                    onStarPressed(index + 1);
+                                  },
+                                );
+                              }),
+                            ),
+                            const Divider(),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
                     Card(
                       elevation: 4,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       child: SizedBox(
                         height: 300,
                         child: ClipRRect(
@@ -206,8 +361,11 @@ Future<void> removeBookmark(String userId, String locationId) async {
                                     point: LatLng(latitude, longitude),
                                     width: 80,
                                     height: 80,
-                                    child: const Icon(Icons.location_on,
-                                        color: Colors.red, size: 40),
+                                    child: const Icon(
+                                      Icons.location_on,
+                                      color: Colors.red,
+                                      size: 40,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -271,12 +429,14 @@ class _ImageCarouselState extends State<ImageCarousel> {
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => FullImageView(
-                          images: widget.images,
-                          initialIndex: index,
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => FullImageView(
+                            images: widget.images,
+                            initialIndex: index,
+                          ),
                         ),
-                      ));
+                      );
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
@@ -287,7 +447,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
                         loadingBuilder: (context, child, progress) {
                           if (progress == null) return child;
                           return const Center(
-                              child: CircularProgressIndicator());
+                            child: CircularProgressIndicator(),
+                          );
                         },
                         errorBuilder: (context, error, stackTrace) {
                           return const Center(child: Icon(Icons.broken_image));

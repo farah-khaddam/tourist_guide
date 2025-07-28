@@ -1,3 +1,4 @@
+// admin_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:tourist_guide/testscreen.dart';
 
@@ -28,7 +29,7 @@ class AdminDashboard extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => AddLandmarkScreen()),
+                        builder: (context) => const AddLandmarkScreen()),
                   );
                 },
                 icon: const Icon(Icons.add_location),

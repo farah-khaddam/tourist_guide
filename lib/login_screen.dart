@@ -1,9 +1,9 @@
+// login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tourist_guide/home_page.dart';
 import 'package:tourist_guide/register_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tourist_guide/admin_dashboard.dart';
 
 class LoginScreen extends StatelessWidget {
   TextEditingController email = TextEditingController();

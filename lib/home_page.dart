@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> {
           .collection('user')
           .doc(user.uid)
           .get();
-      final data = doc.data() as Map<String, dynamic>?;
+      final data = doc.data();
       if (data != null && data['isAdmin'] == true) {
         setState(() {
           isAdmin = true;
