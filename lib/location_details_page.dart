@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tourist_guide/login_screen.dart'; 
+import 'package:tourist_guide/login_screen.dart';
 
 class LocationDetailsPage extends StatefulWidget {
   final String locationId;
@@ -21,16 +21,15 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   bool isSaved = false;
   String? userId;
 
-
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
     final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    userId = user.uid;
-    checkIfBookmarked();
-  }
+    if (user != null) {
+      userId = user.uid;
+      checkIfBookmarked();
+    }
   }
 
   @override
@@ -39,43 +38,43 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     super.dispose();
   }
 
+  void checkIfBookmarked() async {
+    if (userId != null) {
+      bool result = await isBookmarked(userId!, widget.locationId);
+      setState(() {
+        isSaved = result;
+      });
+    }
+  }
 
-void checkIfBookmarked() async {
-  if (userId != null) {
-    bool result = await isBookmarked(userId!, widget.locationId);
-    setState(() {
-      isSaved = result;
+  Future<bool> isBookmarked(String userId, String locationId) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('bookmarks')
+        .where('userId', isEqualTo: userId)
+        .where('locationId', isEqualTo: locationId)
+        .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
+  Future<void> addBookmark(String userId, String locationId) async {
+    await FirebaseFirestore.instance.collection('bookmarks').add({
+      'userId': userId,
+      'locationId': locationId,
+      'timestamp': Timestamp.now(),
     });
   }
-}
 
-Future<bool> isBookmarked(String userId, String locationId) async {
-  final snapshot = await FirebaseFirestore.instance
-      .collection('bookmarks')
-      .where('userId', isEqualTo: userId)
-      .where('locationId', isEqualTo: locationId)
-      .get();
-  return snapshot.docs.isNotEmpty;
-}
-
-Future<void> addBookmark(String userId, String locationId) async {
-  await FirebaseFirestore.instance.collection('bookmarks').add({
-    'userId': userId,
-    'locationId': locationId,
-    'timestamp': Timestamp.now(),
-  });
-}
-
-Future<void> removeBookmark(String userId, String locationId) async {
-  final snapshot = await FirebaseFirestore.instance
-      .collection('bookmarks')
-      .where('userId', isEqualTo: userId)
-      .where('locationId', isEqualTo: locationId)
-      .get();
-  for (var doc in snapshot.docs) {
-    await doc.reference.delete();
+  Future<void> removeBookmark(String userId, String locationId) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('bookmarks')
+        .where('userId', isEqualTo: userId)
+        .where('locationId', isEqualTo: locationId)
+        .get();
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete();
+    }
   }
-}
+
   Future<void> submitRating(int rating) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -131,22 +130,14 @@ Future<void> removeBookmark(String userId, String locationId) async {
         .collection('ratings')
         .snapshots()
         .map((snapshot) {
-          int total = 0, sum = 0, positive = 0, negative = 0;
+          int total = 0, sum = 0;
           for (var doc in snapshot.docs) {
             final r = (doc.data()['rating'] ?? 0) as int;
             sum += r;
             total++;
-            if (r >= 4) positive++; // إيجابي
-            if (r <= 2) negative++; // سلبي
-            // 3 نجوم تعتبر محايد (لا تدخل)
           }
           final avg = total > 0 ? sum / total : 0.0;
-          return {
-            'average': avg,
-            'total': total,
-            'positive': positive,
-            'negative': negative,
-          };
+          return {'average': avg};
         });
   }
 
@@ -207,7 +198,6 @@ Future<void> removeBookmark(String userId, String locationId) async {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,26 +207,26 @@ Future<void> removeBookmark(String userId, String locationId) async {
         foregroundColor: Colors.white,
         centerTitle: true,
         actions: [
-    IconButton(
-      icon: Icon(
-        isSaved ? Icons.bookmark : Icons.bookmark_border,
-        color: Colors.white,
-      ),
-      onPressed: () async {
-        if (userId == null) return;
+          IconButton(
+            icon: Icon(
+              isSaved ? Icons.bookmark : Icons.bookmark_border,
+              color: Colors.white,
+            ),
+            onPressed: () async {
+              if (userId == null) return;
 
-        if (isSaved) {
-          await removeBookmark(userId!, widget.locationId);
-        } else {
-          await addBookmark(userId!, widget.locationId);
-        }
+              if (isSaved) {
+                await removeBookmark(userId!, widget.locationId);
+              } else {
+                await addBookmark(userId!, widget.locationId);
+              }
 
-        setState(() {
-          isSaved = !isSaved;
-        });
-      },
-    ),
-  ],
+              setState(() {
+                isSaved = !isSaved;
+              });
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
@@ -274,7 +264,7 @@ Future<void> removeBookmark(String userId, String locationId) async {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // 👇 إصلاح السطر الذي يسبب الخطأ
+                    // عرض الصور إن وجدت
                     ...images.isNotEmpty ? [ImageCarousel(images: images)] : [],
                     const SizedBox(height: 16),
                     Card(
@@ -327,7 +317,7 @@ Future<void> removeBookmark(String userId, String locationId) async {
                     ),
                     const SizedBox(height: 16),
 
-                    // 👇 StreamBuilder لإحصائيات التقييمات
+                    // StreamBuilder لإحصائيات التقييمات - المتوسط فقط
                     StreamBuilder<Map<String, dynamic>>(
                       stream: ratingStatsStream(),
                       builder: (context, snapshot) {
@@ -336,9 +326,6 @@ Future<void> removeBookmark(String userId, String locationId) async {
                         }
                         final stats = snapshot.data!;
                         final avg = stats['average'] as double;
-                        final total = stats['total'];
-                        final positive = stats['positive'];
-                        final negative = stats['negative'];
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,9 +339,6 @@ Future<void> removeBookmark(String userId, String locationId) async {
                             ),
                             averageStars(avg),
                             Text("المتوسط: ${avg.toStringAsFixed(1)} / 5"),
-                            Text("عدد التقييمات: $total"),
-                            Text("عدد الإيجابيين: $positive"),
-                            Text("عدد السلبيين: $negative"),
                             const SizedBox(height: 8),
                             const Text(
                               "قيّم هذا المعلم:",
@@ -363,8 +347,6 @@ Future<void> removeBookmark(String userId, String locationId) async {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-
-                            // 👇 صف تقييم المستخدم الحالي
                             myRatingRow(),
                             const Divider(),
                           ],
@@ -424,6 +406,7 @@ Future<void> removeBookmark(String userId, String locationId) async {
   }
 }
 
+// Carousel وصور كاملة
 class ImageCarousel extends StatefulWidget {
   final List<String> images;
   const ImageCarousel({required this.images, super.key});
