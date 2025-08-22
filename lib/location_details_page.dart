@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tourist_guide/login_screen.dart'; // مسار شاشة تسجيل الدخول
+import 'package:tourist_guide/login_screen.dart'; 
 
 class LocationDetailsPage extends StatefulWidget {
   final String locationId;
@@ -18,11 +18,19 @@ class LocationDetailsPage extends StatefulWidget {
 class _LocationDetailsPageState extends State<LocationDetailsPage> {
   int currentImageIndex = 0;
   late final PageController _pageController;
+  bool isSaved = false;
+  String? userId;
+
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    userId = user.uid;
+    checkIfBookmarked();
+  }
   }
 
   @override
@@ -31,7 +39,43 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     super.dispose();
   }
 
-  // حفظ/تحديث تقييم المستخدم
+
+void checkIfBookmarked() async {
+  if (userId != null) {
+    bool result = await isBookmarked(userId!, widget.locationId);
+    setState(() {
+      isSaved = result;
+    });
+  }
+}
+
+Future<bool> isBookmarked(String userId, String locationId) async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('bookmarks')
+      .where('userId', isEqualTo: userId)
+      .where('locationId', isEqualTo: locationId)
+      .get();
+  return snapshot.docs.isNotEmpty;
+}
+
+Future<void> addBookmark(String userId, String locationId) async {
+  await FirebaseFirestore.instance.collection('bookmarks').add({
+    'userId': userId,
+    'locationId': locationId,
+    'timestamp': Timestamp.now(),
+  });
+}
+
+Future<void> removeBookmark(String userId, String locationId) async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('bookmarks')
+      .where('userId', isEqualTo: userId)
+      .where('locationId', isEqualTo: locationId)
+      .get();
+  for (var doc in snapshot.docs) {
+    await doc.reference.delete();
+  }
+}
   Future<void> submitRating(int rating) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -163,6 +207,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -171,6 +216,27 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         centerTitle: true,
+        actions: [
+    IconButton(
+      icon: Icon(
+        isSaved ? Icons.bookmark : Icons.bookmark_border,
+        color: Colors.white,
+      ),
+      onPressed: () async {
+        if (userId == null) return;
+
+        if (isSaved) {
+          await removeBookmark(userId!, widget.locationId);
+        } else {
+          await addBookmark(userId!, widget.locationId);
+        }
+
+        setState(() {
+          isSaved = !isSaved;
+        });
+      },
+    ),
+  ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
