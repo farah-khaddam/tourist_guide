@@ -31,25 +31,25 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     super.dispose();
   }
 
+  // حفظ/تحديث تقييم المستخدم
   Future<void> submitRating(int rating) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      // المستخدم غير مسجل - لا نفذ التقييم مباشرة
-      return;
-    }
+    if (user == null) return;
 
     await FirebaseFirestore.instance
         .collection('location')
         .doc(widget.locationId)
         .collection('ratings')
         .doc(user.uid)
-        .set({'rating': rating});
+        .set({
+          'rating': rating,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
   }
 
   void onStarPressed(int rating) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      // عرض نافذة حوار تطلب تسجيل الدخول
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -57,12 +57,12 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
           content: const Text('يجب أن تكون مسجل دخول لتقييم هذا المعلم.'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(), // إلغاء النافذة
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('إلغاء'),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // إغلاق النافذة
+                Navigator.of(context).pop();
                 Navigator.of(
                   context,
                 ).push(MaterialPageRoute(builder: (_) => LoginScreen()));
@@ -73,38 +73,94 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         ),
       );
     } else {
-      // المستخدم مسجل، نفذ التقييم
       submitRating(rating).then((_) {
-        setState(() {});
+        setState(() {}); // إعادة بناء واجهة المستخدم بعد التقييم
       });
     }
   }
 
-  Future<Map<String, dynamic>> getRatingStats() async {
-    final snapshot = await FirebaseFirestore.instance
+  /// إحصائيات التقييمات بشكل Stream لتتحدث لحظياً
+  Stream<Map<String, dynamic>> ratingStatsStream() {
+    return FirebaseFirestore.instance
         .collection('location')
         .doc(widget.locationId)
         .collection('ratings')
-        .get();
+        .snapshots()
+        .map((snapshot) {
+          int total = 0, sum = 0, positive = 0, negative = 0;
+          for (var doc in snapshot.docs) {
+            final r = (doc.data()['rating'] ?? 0) as int;
+            sum += r;
+            total++;
+            if (r >= 4) positive++; // إيجابي
+            if (r <= 2) negative++; // سلبي
+            // 3 نجوم تعتبر محايد (لا تدخل)
+          }
+          final avg = total > 0 ? sum / total : 0.0;
+          return {
+            'average': avg,
+            'total': total,
+            'positive': positive,
+            'negative': negative,
+          };
+        });
+  }
 
-    int total = 0, sum = 0, positive = 0, negative = 0;
-
-    for (var doc in snapshot.docs) {
-      int r = doc['rating'];
-      sum += r;
-      total++;
-      if (r >= 4) positive++;
-      if (r <= 2) negative++;
+  /// عرض تقييم المستخدم الحالي (نجوم ملونة)
+  Widget myRatingRow() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      return Row(
+        children: List.generate(
+          5,
+          (i) => IconButton(
+            icon: const Icon(Icons.star_border, color: Colors.teal),
+            onPressed: () => onStarPressed(i + 1),
+          ),
+        ),
+      );
     }
 
-    double avg = total > 0 ? sum / total : 0.0;
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('location')
+          .doc(widget.locationId)
+          .collection('ratings')
+          .doc(uid)
+          .snapshots(),
+      builder: (context, snap) {
+        int myRating = 0;
+        if (snap.hasData && snap.data!.exists) {
+          final d = snap.data!.data() as Map<String, dynamic>;
+          myRating = (d['rating'] ?? 0) as int;
+        }
+        return Row(
+          children: List.generate(5, (i) {
+            final starIndex = i + 1;
+            return IconButton(
+              icon: Icon(
+                starIndex <= myRating ? Icons.star : Icons.star_border,
+                color: Colors.teal,
+              ),
+              onPressed: () => onStarPressed(starIndex),
+            );
+          }),
+        );
+      },
+    );
+  }
 
-    return {
-      'average': avg,
-      'total': total,
-      'positive': positive,
-      'negative': negative,
-    };
+  /// ودجت لعرض نجوم المتوسط الكلي
+  Widget averageStars(double avg) {
+    return Row(
+      children: List.generate(5, (i) {
+        final starIndex = i + 1;
+        return Icon(
+          starIndex <= avg.round() ? Icons.star : Icons.star_border,
+          color: Colors.amber,
+        );
+      }),
+    );
   }
 
   @override
@@ -152,7 +208,8 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    if (images.isNotEmpty) ImageCarousel(images: images),
+                    // 👇 إصلاح السطر الذي يسبب الخطأ
+                    ...images.isNotEmpty ? [ImageCarousel(images: images)] : [],
                     const SizedBox(height: 16),
                     Card(
                       elevation: 4,
@@ -203,11 +260,14 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    FutureBuilder<Map<String, dynamic>>(
-                      future: getRatingStats(),
+
+                    // 👇 StreamBuilder لإحصائيات التقييمات
+                    StreamBuilder<Map<String, dynamic>>(
+                      stream: ratingStatsStream(),
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData)
+                        if (!snapshot.hasData) {
                           return const CircularProgressIndicator();
+                        }
                         final stats = snapshot.data!;
                         final avg = stats['average'] as double;
                         final total = stats['total'];
@@ -224,17 +284,9 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Row(
-                              children: List.generate(5, (index) {
-                                return Icon(
-                                  index < avg.round()
-                                      ? Icons.star
-                                      : Icons.star_border,
-                                  color: Colors.amber,
-                                );
-                              }),
-                            ),
+                            averageStars(avg),
                             Text("المتوسط: ${avg.toStringAsFixed(1)} / 5"),
+                            Text("عدد التقييمات: $total"),
                             Text("عدد الإيجابيين: $positive"),
                             Text("عدد السلبيين: $negative"),
                             const SizedBox(height: 8),
@@ -245,24 +297,15 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            Row(
-                              children: List.generate(5, (index) {
-                                return IconButton(
-                                  icon: const Icon(
-                                    Icons.star_border,
-                                    color: Colors.teal,
-                                  ),
-                                  onPressed: () {
-                                    onStarPressed(index + 1);
-                                  },
-                                );
-                              }),
-                            ),
+
+                            // 👇 صف تقييم المستخدم الحالي
+                            myRatingRow(),
                             const Divider(),
                           ],
                         );
                       },
                     ),
+
                     const SizedBox(height: 16),
                     Card(
                       elevation: 4,
