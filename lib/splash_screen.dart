@@ -1,71 +1,95 @@
 // splash_screen.dart
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:tourist_guide/home_page.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
+
+// استيراد صفحة الهوم
+import 'home_page.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
-
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
+  final List<Map<String, String>> slides = [
+    {
+      "image": "assets/images/v.png",
+      "text": "هل تبحث عن المعالم السياحية في سوريا؟",
+    },
+    {
+      "image": "assets/images/mm.png",
+      "text": "هل تريد أن تعرف مكانها بسهولة؟",
+    },
+    {"image": "assets/images/c.png", "text": "من الجبال إلى البحر"},
+    {"image": "assets/images/l.png", "text": "كل المعالم بين يديك بدليل واحد"},
+  ];
 
-    Timer(const Duration(seconds: 2), () async {
+  int _currentIndex = 0;
+
+  void _nextSlide() {
+    if (_currentIndex < slides.length - 1) {
+      setState(() {
+        _currentIndex++;
+      });
+    } else {
+      // الانتقال مباشرة لصفحة HomePage بعد آخر سلايد
       Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 500),
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const HomePage(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-        ),
+        MaterialPageRoute(builder: (context) => HomePage()),
       );
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Container(
-            decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [Colors.teal, Colors.white],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter)),
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height / 4,
+    return Scaffold(
+      backgroundColor: Color(0xFFFF8C42),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // صورة مع تأثير تلاشي فقط
+            AnimatedSwitcher(
+              duration: Duration(milliseconds: 800),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
+              child: Image.asset(
+                slides[_currentIndex]["image"]!,
+                key: ValueKey(_currentIndex),
+                height: 220,
+              ),
+            ),
+            SizedBox(height: 30),
+
+            // النص المتحرك
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: DefaultTextStyle(
+                style: GoogleFonts.cairo(
+                  fontSize: 17,
+                  color: Color(0xFFF5DEB3),
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
-                const Icon(
-                  Icons.abc,
-                  color: Colors.black,
-                  size: 200,
+                child: AnimatedTextKit(
+                  key: ValueKey(_currentIndex), // إعادة البناء عند تغيير الشريحة
+                  isRepeatingAnimation: false,
+                  onFinished: _nextSlide,
+                  animatedTexts: [
+                    TypewriterAnimatedText(
+                      slides[_currentIndex]["text"]!,
+                      speed: Duration(milliseconds: 12),
+                    ),
+                  ],
                 ),
-                const Text(
-                  "  دليلك نحوأجمل معالم سوريا",
-                  style: TextStyle(
-                      color: Colors.teal,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800),
-                )
-              ],
-            )),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

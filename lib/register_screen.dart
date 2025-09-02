@@ -1,18 +1,22 @@
 // register_screen.dart
-// ignore_for_file: unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:tourist_guide/home_page.dart';
-import 'package:tourist_guide/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class RegisterScreen extends StatelessWidget {
-  RegisterScreen({super.key});
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  TextEditingController nameController = TextEditingController();
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
-  static GlobalKey<FormState> formkey = GlobalKey();
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey();
+  bool linkSent = false;
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -31,17 +35,17 @@ class RegisterScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Form(
-              key: formkey,
+              key: formKey,
               child: Column(
                 children: [
                   TextFormField(
+                    controller: nameController,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'هذا الحقل مطلوب';
                       }
                       return null;
                     },
-                    controller: nameController,
                     decoration: const InputDecoration(
                       labelText: 'الاسم',
                       border: OutlineInputBorder(),
@@ -49,78 +53,49 @@ class RegisterScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    controller: emailController,
                     validator: (value) {
-                      if (value == '' || value == null) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'هذا الحقل مطلوب';
                       }
                       return null;
                     },
-                    controller: emailController,
                     decoration: const InputDecoration(
                       labelText: 'البريد الالكتروني',
                       border: OutlineInputBorder(),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    validator: (value) {
-                      if (value == '' || value == null) {
-                        return 'هذا الحقل مطلوب';
-                      }
-                      return null;
-                    },
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'كلمة السر',
-                      border: OutlineInputBorder(),
-                    ),
+                    keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    style: const ButtonStyle(
-                      padding: WidgetStatePropertyAll(
-                        EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 40,
                       ),
-                      backgroundColor: WidgetStatePropertyAll(Colors.teal),
+                      backgroundColor: Colors.teal,
                     ),
-                    onPressed: () async {
-                      try {
-                        if (formkey.currentState!.validate()) {
-                          String email = emailController.text;
-                          String password = passwordController.text;
-                          String name = nameController.text;
+                    onPressed: linkSent
+                        ? null
+                        : () async {
+                            if (!formKey.currentState!.validate()) return;
 
-                          ///TODO ربط انشاء حساب
-                          UserCredential userCredential = await FirebaseAuth
-                              .instance
-                              .createUserWithEmailAndPassword(
-                                email: email,
-                                password: password,
-                              );
+                            final email = emailController.text.trim();
+                            final name = nameController.text.trim();
 
-                          await FirebaseFirestore.instance
-                              .collection('user')
-                              .doc(userCredential.user!.uid)
-                              .set({
-                                'email': email,
-                                'name': name,
-                                'isAdmin': false,
-                                'createdAt': FieldValue.serverTimestamp(),
+                            try {
+                              await sendSignInLink(email, name);
+                              setState(() {
+                                linkSent = true;
                               });
-                          showSnackBar(context, "Welcome!");
-                          Future.delayed(const Duration(milliseconds: 500));
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HomePage(),
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        print('Failed to login : $e');
-                      }
-                    },
+                              showSnackBar(
+                                context,
+                                "تم إرسال رابط إنشاء الحساب إلى بريدك الإلكتروني",
+                              );
+                            } catch (e) {
+                              showSnackBar(context, "فشل إرسال الرابط: $e");
+                            }
+                          },
                     child: const Text(
                       'إنشاء حساب',
                       style: TextStyle(
@@ -138,4 +113,37 @@ class RegisterScreen extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> sendSignInLink(String email, String name) async {
+    final actionCodeSettings = ActionCodeSettings(
+      url: 'https://your-app.firebaseapp.com',
+      handleCodeInApp: true,
+      iOSBundleId: 'com.example.ios',
+      androidPackageName: 'com.example.android',
+      androidInstallApp: true,
+      androidMinimumVersion: '21',
+    );
+
+    await FirebaseAuth.instance.sendSignInLinkToEmail(
+      email: email,
+      actionCodeSettings: actionCodeSettings,
+    );
+
+    // حفظ اسم وبريد المستخدم مؤقتًا في Firestore
+    await FirebaseFirestore.instance.collection('users').doc(email).set({
+      'name': name,
+      'email': email,
+    }, SetOptions(merge: true));
+  }
+}
+
+void showSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Center(child: Text(message)),
+      backgroundColor: Colors.teal,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+  );
 }

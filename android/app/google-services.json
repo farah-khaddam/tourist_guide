@@ -12,7 +12,20 @@
           "package_name": "com.example.tourist_guide"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "392425875226-j3vkpugo96r578sj76f573en1n2s3k0d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tourist_guide",
+            "certificate_hash": "ef8d7067bf277cb5ee327258b72862bde90a0148"
+          }
+        },
+        {
+          "client_id": "392425875226-lufl8sn82ift8jr47poqijmn3e4c6qji.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDGt3PN-1n0DeY0x48IweCuWWcKeGHHQSU"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "392425875226-lufl8sn82ift8jr47poqijmn3e4c6qji.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -11,7 +11,6 @@ import 'package:tourist_guide/admin_dashboard.dart';
 import 'testscreen.dart'; // استيراد شاشة إضافة معلم
 import 'EditLandmarkScreen.dart'; // استيراد شاشة تعديل المعلم
 
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -25,10 +24,13 @@ class _HomePageState extends State<HomePage> {
   double? selectedRadius;
   bool isGovernorateExpanded = false;
   bool isAdmin = false;
+  User? currentUser;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    currentUser = FirebaseAuth.instance.currentUser;
     checkIfAdmin();
   }
 
@@ -90,8 +92,33 @@ class _HomePageState extends State<HomePage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("يرجى السماح باستخدام الموقع لعرض الخريطة.")),
+          content: Text("يرجى السماح باستخدام الموقع لعرض الخريطة."),
+        ),
       );
+    }
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index == 1) {
+      // خريطة
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MapScreen(initialRadius: selectedRadius ?? 5.0),
+        ),
+      );
+    } else if (index == 2) {
+      // بروفايل أو تسجيل الدخول
+      if (currentUser == null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     }
   }
 
@@ -100,23 +127,58 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('المواقع السياحية'),
-        backgroundColor: Colors.teal,
+        backgroundColor: Colors.orange.shade700,
         actions: [
           if (isAdmin)
             IconButton(
-                icon: const Icon(Icons.admin_panel_settings),
-                tooltip: 'لوحة التحكم',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AdminDashboard()),
-                  );
-                }),
-          IconButton(
-            icon: const Icon(Icons.login),
-            onPressed: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => LoginScreen())),
-          )
+              icon: const Icon(Icons.admin_panel_settings),
+              tooltip: 'لوحة التحكم',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminDashboard()),
+                );
+              },
+            ),
+          currentUser != null
+              ? Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundImage: NetworkImage(
+                        currentUser!.photoURL ?? 'https://i.pravatar.cc/150',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      currentUser!.displayName ?? currentUser!.email ?? "",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.logout),
+                      tooltip: 'تسجيل خروج',
+                      onPressed: () async {
+                        await FirebaseAuth.instance.signOut();
+                        setState(() {
+                          currentUser = null;
+                        });
+                      },
+                    ),
+                  ],
+                )
+              : IconButton(
+                  icon: const Icon(Icons.login),
+                  tooltip: 'تسجيل الدخول',
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                    setState(() {
+                      currentUser = FirebaseAuth.instance.currentUser;
+                    });
+                  },
+                ),
         ],
       ),
       body: Column(
@@ -172,9 +234,9 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.teal),
+                border: Border.all(color: Colors.orange.shade700),
                 borderRadius: BorderRadius.circular(12),
-                color: Colors.teal.withOpacity(0.05),
+                color: Colors.orange.shade100.withOpacity(0.3),
               ),
               child: isGovernorateExpanded
                   ? Wrap(
@@ -184,9 +246,10 @@ class _HomePageState extends State<HomePage> {
                         return ChoiceChip(
                           label: Text(g),
                           selected: selected,
-                          selectedColor: Colors.teal,
+                          selectedColor: Colors.orange.shade700,
                           labelStyle: TextStyle(
-                              color: selected ? Colors.white : Colors.teal),
+                            color: selected ? Colors.white : Colors.orange,
+                          ),
                           onSelected: (_) {
                             setState(() {
                               selectedGovernorate = g;
@@ -199,43 +262,25 @@ class _HomePageState extends State<HomePage> {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.location_city, color: Colors.teal),
+                        const Icon(Icons.location_city, color: Colors.orange),
                         const SizedBox(width: 8),
                         Text(
                           selectedGovernorate ?? 'اختر المحافظة',
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.teal),
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
                         ),
-                        const Icon(Icons.arrow_drop_down, color: Colors.teal),
+                        const Icon(Icons.arrow_drop_down, color: Colors.orange),
                       ],
                     ),
             ),
           ),
-         /* if (isAdmin)
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AdminDashboard()),
-                  );
-                },
-                icon: const Icon(Icons.admin_panel_settings),
-                label: const Text('الذهاب إلى لوحة تحكم الادمن'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                ),
-              ),
-            ),*/
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream:
-                  FirebaseFirestore.instance.collection('location').snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('location')
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -255,8 +300,10 @@ class _HomePageState extends State<HomePage> {
                 }).toList();
 
                 return GridView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 8,
@@ -272,7 +319,8 @@ class _HomePageState extends State<HomePage> {
 
                     return Card(
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 3,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
@@ -302,26 +350,33 @@ class _HomePageState extends State<HomePage> {
                                               (context, child, progress) {
                                             if (progress == null) return child;
                                             return const Center(
-                                                child:
-                                                    CircularProgressIndicator());
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            );
                                           },
                                           errorBuilder:
                                               (context, error, stackTrace) {
                                             return const Center(
-                                                child:
-                                                    Icon(Icons.broken_image));
+                                              child: Icon(
+                                                Icons.broken_image,
+                                              ),
+                                            );
                                           },
                                         )
-                                      : const Icon(Icons.location_on,
-                                          size: 60, color: Colors.teal),
+                                      : const Icon(
+                                          Icons.location_on,
+                                          size: 60,
+                                          color: Colors.orange,
+                                        ),
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 name,
                                 style: const TextStyle(
-                                    color: Colors.teal,
-                                    fontWeight: FontWeight.bold),
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -334,8 +389,10 @@ class _HomePageState extends State<HomePage> {
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.teal),
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: Colors.orange,
+                                    ),
                                     onPressed: () {
                                       Navigator.push(
                                         context,
@@ -357,6 +414,27 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.orange.shade100,
+        selectedItemColor: Colors.orange.shade700,
+        unselectedItemColor: Colors.brown.shade300,
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "الرئيسية",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: "الخريطة",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: "حسابي",
           ),
         ],
       ),
