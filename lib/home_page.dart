@@ -72,7 +72,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> fetchAllLocations() async {
-    final snapshot = await FirebaseFirestore.instance.collection('location').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('location')
+        .get();
     final names = snapshot.docs
         .map((doc) => (doc.data()['name'] ?? '').toString())
         .toList();
@@ -82,49 +84,59 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  setState(() {
+    _selectedIndex = index;
+  });
 
-    switch (index) {
-      case 0: // الرئيسية
-        setState(() {
-          selectedGovernorate = null;
-          selectedType = null;
-          searchQuery = '';
-        });
-        break;
-      case 1:
-        _showSearchDialog();
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => MapScreen(initialRadius: 5.0)),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const SettingsPage()),
-        );
-        break;
-    }
+  switch (index) {
+    case 0: // الرئيسية
+      setState(() {
+        selectedGovernorate = null;
+        selectedType = null;
+        searchQuery = '';
+      });
+      break;
+    case 1:
+      _showSearchDialog();
+      break;
+    case 2:
+      // أول ما يضغط على الخريطة، نظهر رسالة توضيحية 5 ثواني
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+           content: Text("يمكنك اختيار المسافة للمواقع القريبة من الاعلى"), 
+
+          duration: Duration(seconds: 5),
+        ),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => MapScreen()),
+      );
+      break;
+    case 3:
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SettingsPage()),
+      );
+      break;
   }
+}
+
 
   void _showFilterChoiceDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final bgColor = themeProvider.isDark ? Colors.black : const Color(0xFFFFF5E1);
-    final btnColor = themeProvider.isDark ? themeProvider.orangeDark : Colors.orange.shade700;
+    final bgColor = themeProvider.isDark
+        ? Colors.black
+        : const Color(0xFFFFF5E1);
+    final btnColor = themeProvider.isDark
+        ? themeProvider.orangeDark
+        : Colors.orange.shade700;
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: bgColor,
-        title: Text(
-          "اختر نوع التصنيف",
-          style: TextStyle(color: btnColor),
-        ),
+        title: Text("اختر نوع التصنيف", style: TextStyle(color: btnColor)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -153,7 +165,9 @@ class _HomePageState extends State<HomePage> {
 
   void _showFilterDialog({required bool isGovernorate}) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final bgColor = themeProvider.isDark ? Colors.black : const Color(0xFFFFF5E1);
+    final bgColor = themeProvider.isDark
+        ? Colors.black
+        : const Color(0xFFFFF5E1);
     final textColor = themeProvider.isDark ? Colors.white : Colors.orange;
 
     showModalBottomSheet(
@@ -166,7 +180,11 @@ class _HomePageState extends State<HomePage> {
           children: [
             Text(
               isGovernorate ? "تصنيف حسب المحافظة" : "تصنيف حسب النوع",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -176,10 +194,12 @@ class _HomePageState extends State<HomePage> {
                 border: const OutlineInputBorder(),
               ),
               items: (isGovernorate ? governorates : types)
-                  .map((item) => DropdownMenuItem(
-                        value: item,
-                        child: Text(item, style: TextStyle(color: textColor)),
-                      ))
+                  .map(
+                    (item) => DropdownMenuItem(
+                      value: item,
+                      child: Text(item, style: TextStyle(color: textColor)),
+                    ),
+                  )
                   .toList(),
               onChanged: (val) {
                 setState(() {
@@ -200,7 +220,9 @@ class _HomePageState extends State<HomePage> {
 
   void _showSearchDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final bgColor = themeProvider.isDark ? Colors.black : const Color(0xFFFFF5E1);
+    final bgColor = themeProvider.isDark
+        ? Colors.black
+        : const Color(0xFFFFF5E1);
     final textColor = themeProvider.isDark ? Colors.white : Colors.orange;
 
     showDialog(
@@ -210,9 +232,12 @@ class _HomePageState extends State<HomePage> {
         title: Text("ابحث عن معلم", style: TextStyle(color: textColor)),
         content: Autocomplete<String>(
           optionsBuilder: (TextEditingValue textEditingValue) {
-            if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
+            if (textEditingValue.text.isEmpty)
+              return const Iterable<String>.empty();
             return allLocations.where(
-              (name) => name.toLowerCase().contains(textEditingValue.text.toLowerCase()),
+              (name) => name.toLowerCase().contains(
+                textEditingValue.text.toLowerCase(),
+              ),
             );
           },
           onSelected: (String selection) async {
@@ -252,10 +277,18 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final bgColor = themeProvider.isDark ? Colors.black : const Color(0xFFFFF5E1);
-    final cardColor = themeProvider.isDark ? Colors.grey.shade900 : const Color(0xFFFFF5E1);
-    final textColor = themeProvider.isDark ? Colors.white : Colors.orange.shade700;
-    final navBarColor = themeProvider.isDark ? Colors.grey.shade900 : Colors.orange.shade700;
+    final bgColor = themeProvider.isDark
+        ? Colors.black
+        : const Color(0xFFFFF5E1);
+    final cardColor = themeProvider.isDark
+        ? Colors.grey.shade900
+        : const Color(0xFFFFF5E1);
+    final textColor = themeProvider.isDark
+        ? Colors.white
+        : Colors.orange.shade700;
+    final navBarColor = themeProvider.isDark
+        ? Colors.grey.shade900
+        : Colors.orange.shade700;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -266,47 +299,56 @@ class _HomePageState extends State<HomePage> {
           onPressed: _showFilterChoiceDialog,
         ),
         iconTheme: const IconThemeData(color: Colors.white),
-        
         actions: [
-  IconButton(
-    icon: const Icon(Icons.notifications),
-    onPressed: () {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("لا توجد إشعارات حالياً.")),
-      );
-    },
-    color: Colors.white,
-  ),
-  // ⬅ أيقونة البوك مارك تظهر فقط بعد تسجيل الدخول
-  if (currentUser != null)
-    IconButton(
-      icon: const Icon(Icons.bookmark),
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const BookmarkPage()),
-        );
-      },
-      color: Colors.white,
-    ),
-  if (isAdmin)
-    IconButton(
-      icon: const Icon(Icons.admin_panel_settings),
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminDashboard()),
-        );
-      },
-      color: Colors.white,
-    ),
-],
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("لا توجد إشعارات حالياً.")),
+              );
+            },
+            color: Colors.white,
+          ),
 
+          // 👈 استخدم StreamBuilder لتحديث أيقونة البوك مارك تلقائيًا
+          StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              final user = snapshot.data;
+              if (user == null)
+                return const SizedBox(); // لا تظهر الأيقونة إذا لم يسجل الدخول
+              return IconButton(
+                icon: const Icon(Icons.bookmark),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BookmarkPage()),
+                  );
+                },
+                color: Colors.white,
+              );
+            },
+          ),
+
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminDashboard()),
+                );
+              },
+              color: Colors.white,
+            ),
+        ],
       ),
+
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('location').snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData)
+            return const Center(child: CircularProgressIndicator());
 
           final docs = snapshot.data!.docs;
           final locations = docs.where((doc) {
@@ -404,18 +446,23 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: navBarColor,
         selectedItemColor: Colors.white,
-        unselectedItemColor: themeProvider.isDark ? Colors.white70 : Colors.orange.shade100,
+        unselectedItemColor: themeProvider.isDark
+            ? Colors.white70
+            : Colors.orange.shade100,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "الرئيسية",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "الرئيسية"),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: "بحث"),
-          BottomNavigationBarItem(icon: Icon(Icons.map_outlined), label: "الخريطة"),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "الإعدادات"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map_outlined),
+            label: "الخريطة",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: "الإعدادات",
+          ),
         ],
       ),
     );

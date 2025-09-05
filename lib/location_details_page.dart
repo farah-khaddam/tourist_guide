@@ -130,19 +130,23 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              Navigator.of(context).push(
+
+              await Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => LogOrSign(
                     redirectPage: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => LocationDetailsPage(
-                            locationId: widget.locationId,
-                          ),
-                        ),
-                      );
+                      // بعد تسجيل الدخول مباشرة
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        setState(() {
+                          userId = user.uid;
+                          checkIfBookmarked();
+                          checkIfAdmin();
+                        });
+                      }
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('أهلاً بك! 😊 لقد سجلت الدخول بنجاح.'),
