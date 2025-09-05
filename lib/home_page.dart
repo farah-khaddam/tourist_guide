@@ -9,6 +9,7 @@ import 'map_screen.dart';
 import 'package:tourist_guide/admin_dashboard.dart';
 import 'EditLandmarkScreen.dart';
 import 'theme_provider.dart';
+import 'bookmark.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -86,7 +87,12 @@ class _HomePageState extends State<HomePage> {
     });
 
     switch (index) {
-      case 0:
+      case 0: // الرئيسية
+        setState(() {
+          selectedGovernorate = null;
+          selectedType = null;
+          searchQuery = '';
+        });
         break;
       case 1:
         _showSearchDialog();
@@ -116,7 +122,7 @@ class _HomePageState extends State<HomePage> {
       builder: (_) => AlertDialog(
         backgroundColor: bgColor,
         title: Text(
-          "اختر نوع التصفية",
+          "اختر نوع التصنيف",
           style: TextStyle(color: btnColor),
         ),
         content: Column(
@@ -159,7 +165,7 @@ class _HomePageState extends State<HomePage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isGovernorate ? "تصفية حسب المحافظة" : "تصفية حسب النوع",
+              isGovernorate ? "تصنيف حسب المحافظة" : "تصنيف حسب النوع",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
             ),
             const SizedBox(height: 12),
@@ -260,28 +266,42 @@ class _HomePageState extends State<HomePage> {
           onPressed: _showFilterChoiceDialog,
         ),
         iconTheme: const IconThemeData(color: Colors.white),
+        
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("لا توجد إشعارات حالياً.")),
-              );
-            },
-            color: Colors.white,
-          ),
-          if (isAdmin)
-            IconButton(
-              icon: const Icon(Icons.admin_panel_settings),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminDashboard()),
-                );
-              },
-              color: Colors.white,
-            ),
-        ],
+  IconButton(
+    icon: const Icon(Icons.notifications),
+    onPressed: () {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("لا توجد إشعارات حالياً.")),
+      );
+    },
+    color: Colors.white,
+  ),
+  // ⬅ أيقونة البوك مارك تظهر فقط بعد تسجيل الدخول
+  if (currentUser != null)
+    IconButton(
+      icon: const Icon(Icons.bookmark),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BookmarkPage()),
+        );
+      },
+      color: Colors.white,
+    ),
+  if (isAdmin)
+    IconButton(
+      icon: const Icon(Icons.admin_panel_settings),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminDashboard()),
+        );
+      },
+      color: Colors.white,
+    ),
+],
+
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('location').snapshots(),
@@ -308,10 +328,10 @@ class _HomePageState extends State<HomePage> {
           return GridView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+              crossAxisCount: 4, // 3 معالم بكل صف
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
-              childAspectRatio: 3 / 4,
+              childAspectRatio: 2 / 3,
             ),
             itemCount: locations.length,
             itemBuilder: (context, index) {
@@ -337,7 +357,7 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -352,12 +372,12 @@ class _HomePageState extends State<HomePage> {
                                   )
                                 : Icon(
                                     Icons.location_on,
-                                    size: 60,
+                                    size: 50,
                                     color: textColor,
                                   ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Text(
                           name,
                           style: TextStyle(
@@ -367,10 +387,10 @@ class _HomePageState extends State<HomePage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           data['governorate'] ?? '',
-                          style: TextStyle(color: textColor),
+                          style: TextStyle(color: textColor, fontSize: 12),
                         ),
                       ],
                     ),

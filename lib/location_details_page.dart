@@ -1,5 +1,5 @@
 // location_details_page.dart
- // location_details_page.dart
+// location_details_page.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -39,18 +39,25 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   }
 
   // ألوان حسب الوضع
-  Color get backgroundColor =>
-      Theme.of(context).brightness == Brightness.dark ? Colors.black : Color(0xFFFFF5E1);
-  Color get cardColor =>
-      Theme.of(context).brightness == Brightness.dark ? Color(0xFF2C2C2C) : Colors.white;
-  Color get textColor =>
-      Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
-  Color get primaryColor =>
-      Theme.of(context).brightness == Brightness.dark ? Color(0xFFB85C00) : Color(0xFFFF9800);
+  Color get backgroundColor => Theme.of(context).brightness == Brightness.dark
+      ? Colors.black
+      : Color(0xFFFFF5E1);
+  Color get cardColor => Theme.of(context).brightness == Brightness.dark
+      ? Color(0xFF2C2C2C)
+      : Colors.white;
+  Color get textColor => Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : Colors.black;
+  Color get primaryColor => Theme.of(context).brightness == Brightness.dark
+      ? Color(0xFFB85C00)
+      : Color(0xFFFF9800);
 
   Future<void> checkIfAdmin() async {
     if (userId == null) return;
-    final doc = await FirebaseFirestore.instance.collection('user').doc(userId).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('user')
+        .doc(userId)
+        .get();
     final data = doc.data();
     if (data != null && data['isAdmin'] == true) {
       setState(() {
@@ -106,9 +113,9 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         .collection('ratings')
         .doc(user.uid)
         .set({
-      'rating': rating,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+          'rating': rating,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
   }
 
   void _showLoginDialog() {
@@ -131,7 +138,9 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                     redirectPage: () {
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
-                          builder: (_) => LocationDetailsPage(locationId: widget.locationId),
+                          builder: (_) => LocationDetailsPage(
+                            locationId: widget.locationId,
+                          ),
                         ),
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -164,15 +173,26 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   Future<void> submitComment(String text) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+
+    // جلب بيانات المستخدم من كولكشن user
+    final userDoc = await FirebaseFirestore.instance
+        .collection('user')
+        .doc(user.uid)
+        .get();
+    final userData = userDoc.data();
+    final userName = userData?['name'] ?? 'مستخدم مجهول';
+
     await FirebaseFirestore.instance
         .collection('location')
         .doc(widget.locationId)
         .collection('comments')
         .add({
-      'userId': user.uid,
-      'comment': text,
-      'timestamp': Timestamp.now(),
-    });
+          'userId': user.uid,
+          'userName': userName, // 👈 إضافة الاسم
+          'comment': text,
+          'timestamp': Timestamp.now(),
+        });
+
     _commentController.clear();
   }
 
@@ -181,7 +201,9 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     return Card(
       color: cardColor,
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(cardRadius),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
@@ -214,7 +236,8 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                 icon: Icon(Icons.send, color: primaryColor),
                 onPressed: () {
                   final text = _commentController.text.trim();
-                  if (text.isNotEmpty) submitComment(text).then((_) => setState(() {}));
+                  if (text.isNotEmpty)
+                    submitComment(text).then((_) => setState(() {}));
                 },
               ),
           ],
@@ -230,15 +253,15 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         .collection('ratings')
         .snapshots()
         .map((snapshot) {
-      int total = 0, sum = 0;
-      for (var doc in snapshot.docs) {
-        final r = (doc.data()['rating'] ?? 0) as int;
-        sum += r;
-        total++;
-      }
-      final avg = total > 0 ? sum / total : 0.0;
-      return {'average': avg, 'count': total};
-    });
+          int total = 0, sum = 0;
+          for (var doc in snapshot.docs) {
+            final r = (doc.data()['rating'] ?? 0) as int;
+            sum += r;
+            total++;
+          }
+          final avg = total > 0 ? sum / total : 0.0;
+          return {'average': avg, 'count': total};
+        });
   }
 
   Widget myRatingRow() {
@@ -307,25 +330,72 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const CircularProgressIndicator();
         final comments = snapshot.data!.docs;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('التعليقات (${comments.length})',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
-            const SizedBox(height: 8),
-            ...comments.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              final commentText = data['comment'] ?? '';
-              return Card(
-                color: cardColor,
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(commentText, style: TextStyle(color: textColor)),
+        bool showAll = false; // يتحكم إذا اضغط المستخدم عرض المزيد
+        int displayCount = comments.length > 2 ? 2 : comments.length;
+
+        return StatefulBuilder(
+          builder: (context, setStateSB) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'التعليقات (${comments.length})',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
                 ),
-              );
-            }).toList(),
-          ],
+              ),
+              const SizedBox(height: 8),
+              ...comments.take(showAll ? comments.length : displayCount).map((
+                doc,
+              ) {
+                final data = doc.data() as Map<String, dynamic>;
+                final commentText = data['comment'] ?? '';
+                final userName = data['userName'] ?? 'مستخدم مجهول';
+
+                return Card(
+                  color: cardColor,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            userName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            commentText,
+                            style: TextStyle(color: textColor),
+                            textAlign: TextAlign.right,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+              if (comments.length > 2)
+                TextButton(
+                  onPressed: () {
+                    setStateSB(() {
+                      showAll = !showAll;
+                    });
+                  },
+                  child: Text(showAll ? "عرض أقل" : "عرض المزيد"),
+                ),
+              const SizedBox(height: 8),
+              _buildCommentBox(), // ⬅ مربع إضافة تعليق يكون بعد التعليقات
+            ],
+          ),
         );
       },
     );
@@ -334,10 +404,15 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('location').doc(widget.locationId).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('location')
+          .doc(widget.locationId)
+          .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.data!.exists) return const Center(child: Text('لم يتم العثور على بيانات.'));
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+        if (!snapshot.data!.exists)
+          return const Center(child: Text('لم يتم العثور على بيانات.'));
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final name = data['name'] ?? 'بدون اسم';
@@ -347,8 +422,10 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         final longitude = (data['longitude'] ?? 0.0).toDouble();
 
         List<String> images = [];
-        if (data['images'] != null) images = List<String>.from(data['images']);
-        else if (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty)
+        if (data['images'] != null)
+          images = List<String>.from(data['images']);
+        else if (data['imageUrl'] != null &&
+            data['imageUrl'].toString().isNotEmpty)
           images = [data['imageUrl']];
 
         return Directionality(
@@ -362,28 +439,40 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
               centerTitle: true,
               actions: [
                 IconButton(
-                  icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: Colors.white),
+                  icon: Icon(
+                    isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    color: Colors.white,
+                  ),
                   onPressed: () async {
-                    if (userId == null) return;
-                    if (isSaved)
-                      await removeBookmark(userId!, widget.locationId);
-                    else
-                      await addBookmark(userId!, widget.locationId);
+                    final user = FirebaseAuth.instance.currentUser;
+
+                    if (user == null) {
+                      // المستخدم غير مسجل دخول → عرض مربع حوار
+                      _showLoginDialog();
+                      return;
+                    }
+
+                    // المستخدم مسجل دخول → حفظ أو إزالة
+                    String message;
+                    if (isSaved) {
+                      await removeBookmark(user.uid, widget.locationId);
+                      message = 'تمت الإزالة من قائمة المفضلة';
+                    } else {
+                      await addBookmark(user.uid, widget.locationId);
+                      message = 'تمت الإضافة إلى قائمة المفضلة';
+                    }
+
                     setState(() => isSaved = !isSaved);
+
+                    // إظهار Snackbar
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
                   },
                 ),
-                if (isAdmin)
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EditLandmarkScreen(landmark: snapshot.data!),
-                        ),
-                      );
-                    },
-                  ),
               ],
             ),
             body: SingleChildScrollView(
@@ -395,25 +484,50 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                   Card(
                     color: cardColor,
                     elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(cardRadius),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(name, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           Row(
                             children: [
                               Icon(Icons.location_on, color: primaryColor),
                               const SizedBox(width: 6),
-                              Text(governorate, style: TextStyle(fontSize: 16, color: textColor)),
+                              Text(
+                                governorate,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: textColor,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          Text('الوصف:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textColor)),
+                          Text(
+                            'الوصف:',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                            ),
+                          ),
                           const SizedBox(height: 6),
-                          Text(description, style: TextStyle(fontSize: 16, color: textColor)),
+                          Text(
+                            description,
+                            style: TextStyle(fontSize: 16, color: textColor),
+                          ),
                         ],
                       ),
                     ),
@@ -422,21 +536,34 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                   StreamBuilder<Map<String, dynamic>>(
                     stream: ratingStatsStream(),
                     builder: (context, snap) {
-                      if (!snap.hasData) return const CircularProgressIndicator();
+                      if (!snap.hasData)
+                        return const CircularProgressIndicator();
                       final avg = snap.data!['average'] as double;
                       final count = snap.data!['count'] as int;
                       return Card(
                         color: cardColor,
                         elevation: 4,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(cardRadius),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('تقييم المستخدمين ($count تقييم)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+                              Text(
+                                'تقييم المستخدمين ($count تقييم)',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                              ),
                               averageStars(avg),
-                              Text("المتوسط: ${avg.toStringAsFixed(1)} / 5", style: TextStyle(color: textColor)),
+                              Text(
+                                "المتوسط: ${avg.toStringAsFixed(1)} / 5",
+                                style: TextStyle(color: textColor),
+                              ),
                               const SizedBox(height: 12),
                               myRatingRow(),
                             ],
@@ -445,15 +572,14 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
-                  _buildCommentBox(),
-                  const SizedBox(height: 16),
                   _buildCommentsList(),
                   const SizedBox(height: 16),
                   Card(
                     color: cardColor,
                     elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(cardRadius),
+                    ),
                     child: SizedBox(
                       height: 300,
                       child: ClipRRect(
@@ -465,7 +591,8 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                           ),
                           children: [
                             TileLayer(
-                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                               userAgentPackageName: 'com.example.tourist_guide',
                             ),
                             MarkerLayer(
@@ -474,7 +601,11 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                                   point: LatLng(latitude, longitude),
                                   width: 80,
                                   height: 80,
-                                  child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                                  child: const Icon(
+                                    Icons.location_on,
+                                    color: Colors.red,
+                                    size: 40,
+                                  ),
                                 ),
                               ],
                             ),
@@ -493,7 +624,11 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   }
 
   Widget _buildImageCarousel(List<String> images) {
-    return ImageCarousel(images: images, primaryColor: primaryColor, cardRadius: cardRadius);
+    return ImageCarousel(
+      images: images,
+      primaryColor: primaryColor,
+      cardRadius: cardRadius,
+    );
   }
 }
 
@@ -502,7 +637,12 @@ class ImageCarousel extends StatefulWidget {
   final List<String> images;
   final Color primaryColor;
   final double cardRadius;
-  const ImageCarousel({required this.images, required this.primaryColor, required this.cardRadius, super.key});
+  const ImageCarousel({
+    required this.images,
+    required this.primaryColor,
+    required this.cardRadius,
+    super.key,
+  });
 
   @override
   State<ImageCarousel> createState() => _ImageCarouselState();
@@ -561,7 +701,9 @@ class _ImageCarouselState extends State<ImageCarousel> {
               width: currentImageIndex == index ? 12 : 8,
               height: currentImageIndex == index ? 12 : 8,
               decoration: BoxDecoration(
-                color: currentImageIndex == index ? widget.primaryColor : Colors.grey,
+                color: currentImageIndex == index
+                    ? widget.primaryColor
+                    : Colors.grey,
                 shape: BoxShape.circle,
               ),
             );
@@ -577,7 +719,11 @@ class FullImageView extends StatefulWidget {
   final List<String> images;
   final int initialIndex;
 
-  const FullImageView({super.key, required this.images, required this.initialIndex});
+  const FullImageView({
+    super.key,
+    required this.images,
+    required this.initialIndex,
+  });
 
   @override
   State<FullImageView> createState() => _FullImageViewState();
@@ -620,10 +766,7 @@ class _FullImageViewState extends State<FullImageView> {
           },
           itemBuilder: (context, index) {
             return InteractiveViewer(
-              child: Image.network(
-                widget.images[index],
-                fit: BoxFit.contain,
-              ),
+              child: Image.network(widget.images[index], fit: BoxFit.contain),
             );
           },
         ),
