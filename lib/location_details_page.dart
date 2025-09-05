@@ -1,10 +1,12 @@
 // location_details_page.dart
+ // location_details_page.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tourist_guide/login_screen.dart';
+import 'package:tourist_guide/Login.dart';
+import 'package:tourist_guide/EditLandmarkScreen.dart';
 
 class LocationDetailsPage extends StatefulWidget {
   final String locationId;
@@ -19,7 +21,10 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   int currentImageIndex = 0;
   late final PageController _pageController;
   bool isSaved = false;
+  bool isAdmin = false;
   String? userId;
+  final double cardRadius = 16;
+  final TextEditingController _commentController = TextEditingController();
 
   @override
   void initState() {
@@ -29,16 +34,32 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     if (user != null) {
       userId = user.uid;
       checkIfBookmarked();
+      checkIfAdmin();
     }
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  // ألوان حسب الوضع
+  Color get backgroundColor =>
+      Theme.of(context).brightness == Brightness.dark ? Colors.black : Color(0xFFFFF5E1);
+  Color get cardColor =>
+      Theme.of(context).brightness == Brightness.dark ? Color(0xFF2C2C2C) : Colors.white;
+  Color get textColor =>
+      Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
+  Color get primaryColor =>
+      Theme.of(context).brightness == Brightness.dark ? Color(0xFFB85C00) : Color(0xFFFF9800);
+
+  Future<void> checkIfAdmin() async {
+    if (userId == null) return;
+    final doc = await FirebaseFirestore.instance.collection('user').doc(userId).get();
+    final data = doc.data();
+    if (data != null && data['isAdmin'] == true) {
+      setState(() {
+        isAdmin = true;
+      });
+    }
   }
 
-  void checkIfBookmarked() async {
+  Future<void> checkIfBookmarked() async {
     if (userId != null) {
       bool result = await isBookmarked(userId!, widget.locationId);
       setState(() {
@@ -85,44 +106,123 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         .collection('ratings')
         .doc(user.uid)
         .set({
-          'rating': rating,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+      'rating': rating,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('مطلوب تسجيل الدخول'),
+        content: const Text('يجب أن تكون مسجل دخول للقيام بهذه العملية.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => LogOrSign(
+                    redirectPage: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => LocationDetailsPage(locationId: widget.locationId),
+                        ),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('أهلاً بك! 😊 لقد سجلت الدخول بنجاح.'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+            child: const Text('تسجيل دخول'),
+          ),
+        ],
+      ),
+    );
   }
 
   void onStarPressed(int rating) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('مطلوب تسجيل الدخول'),
-          content: const Text('يجب أن تكون مسجل دخول لتقييم هذا المعلم.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => LoginScreen()));
-              },
-              child: const Text('تسجيل دخول'),
-            ),
-          ],
-        ),
-      );
+      _showLoginDialog();
     } else {
-      submitRating(rating).then((_) {
-        setState(() {}); // إعادة بناء واجهة المستخدم بعد التقييم
-      });
+      submitRating(rating).then((_) => setState(() {}));
     }
   }
 
-  /// إحصائيات التقييمات بشكل Stream لتتحدث لحظياً
+  Future<void> submitComment(String text) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    await FirebaseFirestore.instance
+        .collection('location')
+        .doc(widget.locationId)
+        .collection('comments')
+        .add({
+      'userId': user.uid,
+      'comment': text,
+      'timestamp': Timestamp.now(),
+    });
+    _commentController.clear();
+  }
+
+  Widget _buildCommentBox() {
+    final user = FirebaseAuth.instance.currentUser;
+    return Card(
+      color: cardColor,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _commentController,
+                readOnly: user == null,
+                onTap: () {
+                  if (user == null) _showLoginDialog();
+                },
+                maxLines: null,
+                decoration: InputDecoration(
+                  hintText: 'أضف تعليقًا...',
+                  hintStyle: TextStyle(color: Colors.grey.withOpacity(0.7)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade400),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade400),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (user != null)
+              IconButton(
+                icon: Icon(Icons.send, color: primaryColor),
+                onPressed: () {
+                  final text = _commentController.text.trim();
+                  if (text.isNotEmpty) submitComment(text).then((_) => setState(() {}));
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Stream<Map<String, dynamic>> ratingStatsStream() {
     return FirebaseFirestore.instance
         .collection('location')
@@ -130,18 +230,17 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         .collection('ratings')
         .snapshots()
         .map((snapshot) {
-          int total = 0, sum = 0;
-          for (var doc in snapshot.docs) {
-            final r = (doc.data()['rating'] ?? 0) as int;
-            sum += r;
-            total++;
-          }
-          final avg = total > 0 ? sum / total : 0.0;
-          return {'average': avg};
-        });
+      int total = 0, sum = 0;
+      for (var doc in snapshot.docs) {
+        final r = (doc.data()['rating'] ?? 0) as int;
+        sum += r;
+        total++;
+      }
+      final avg = total > 0 ? sum / total : 0.0;
+      return {'average': avg, 'count': total};
+    });
   }
 
-  /// عرض تقييم المستخدم الحالي (نجوم ملونة)
   Widget myRatingRow() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -149,7 +248,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         children: List.generate(
           5,
           (i) => IconButton(
-            icon: const Icon(Icons.star_border, color: Colors.teal),
+            icon: Icon(Icons.star_border, color: Colors.amber),
             onPressed: () => onStarPressed(i + 1),
           ),
         ),
@@ -175,7 +274,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
             return IconButton(
               icon: Icon(
                 starIndex <= myRating ? Icons.star : Icons.star_border,
-                color: Colors.teal,
+                color: Colors.amber,
               ),
               onPressed: () => onStarPressed(starIndex),
             );
@@ -185,7 +284,6 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     );
   }
 
-  /// ودجت لعرض نجوم المتوسط الكلي
   Widget averageStars(double avg) {
     return Row(
       children: List.generate(5, (i) {
@@ -198,218 +296,213 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     );
   }
 
+  Widget _buildCommentsList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('location')
+          .doc(widget.locationId)
+          .collection('comments')
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const CircularProgressIndicator();
+        final comments = snapshot.data!.docs;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('التعليقات (${comments.length})',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+            const SizedBox(height: 8),
+            ...comments.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final commentText = data['comment'] ?? '';
+              return Card(
+                color: cardColor,
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(commentText, style: TextStyle(color: textColor)),
+                ),
+              );
+            }).toList(),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('تفاصيل الموقع'),
-        backgroundColor: Colors.teal,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              isSaved ? Icons.bookmark : Icons.bookmark_border,
-              color: Colors.white,
-            ),
-            onPressed: () async {
-              if (userId == null) return;
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('location').doc(widget.locationId).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.data!.exists) return const Center(child: Text('لم يتم العثور على بيانات.'));
 
-              if (isSaved) {
-                await removeBookmark(userId!, widget.locationId);
-              } else {
-                await addBookmark(userId!, widget.locationId);
-              }
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final name = data['name'] ?? 'بدون اسم';
+        final description = data['description'] ?? 'لا يوجد وصف';
+        final governorate = data['governorate'] ?? 'غير محددة';
+        final latitude = (data['latitude'] ?? 0.0).toDouble();
+        final longitude = (data['longitude'] ?? 0.0).toDouble();
 
-              setState(() {
-                isSaved = !isSaved;
-              });
-            },
-          ),
-        ],
-      ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
-            .collection('location')
-            .doc(widget.locationId)
-            .get(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+        List<String> images = [];
+        if (data['images'] != null) images = List<String>.from(data['images']);
+        else if (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty)
+          images = [data['imageUrl']];
 
-          if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text('لم يتم العثور على بيانات.'));
-          }
-
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          final name = data['name'] ?? 'بدون اسم';
-          final description = data['description'] ?? 'لا يوجد وصف';
-          final governorate = data['governorate'] ?? 'غير محددة';
-          final latitude = (data['latitude'] ?? 0.0).toDouble();
-          final longitude = (data['longitude'] ?? 0.0).toDouble();
-
-          List<String> images = [];
-          if (data['images'] != null) {
-            images = List<String>.from(data['images']);
-          } else if (data['imageUrl'] != null &&
-              data['imageUrl'].toString().isNotEmpty) {
-            images = [data['imageUrl']];
-          }
-
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // عرض الصور إن وجدت
-                    ...images.isNotEmpty ? [ImageCarousel(images: images)] : [],
-                    const SizedBox(height: 16),
-                    Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  color: Colors.teal,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  governorate,
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'الوصف:',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              description,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ],
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            backgroundColor: backgroundColor,
+            appBar: AppBar(
+              title: const Text('تفاصيل الموقع'),
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: Colors.white),
+                  onPressed: () async {
+                    if (userId == null) return;
+                    if (isSaved)
+                      await removeBookmark(userId!, widget.locationId);
+                    else
+                      await addBookmark(userId!, widget.locationId);
+                    setState(() => isSaved = !isSaved);
+                  },
+                ),
+                if (isAdmin)
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditLandmarkScreen(landmark: snapshot.data!),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // StreamBuilder لإحصائيات التقييمات - المتوسط فقط
-                    StreamBuilder<Map<String, dynamic>>(
-                      stream: ratingStatsStream(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const CircularProgressIndicator();
-                        }
-                        final stats = snapshot.data!;
-                        final avg = stats['average'] as double;
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "تقييم المستخدمين:",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            averageStars(avg),
-                            Text("المتوسط: ${avg.toStringAsFixed(1)} / 5"),
-                            const SizedBox(height: 8),
-                            const Text(
-                              "قيّم هذا المعلم:",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            myRatingRow(),
-                            const Divider(),
-                          ],
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-                    Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: SizedBox(
-                        height: 300,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: FlutterMap(
-                            options: MapOptions(
-                              initialCenter: LatLng(latitude, longitude),
-                              initialZoom: 13.0,
-                            ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  if (images.isNotEmpty) _buildImageCarousel(images),
+                  const SizedBox(height: 16),
+                  Card(
+                    color: cardColor,
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
+                          const SizedBox(height: 8),
+                          Row(
                             children: [
-                              TileLayer(
-                                urlTemplate:
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName:
-                                    'com.example.tourist_guide',
-                              ),
-                              MarkerLayer(
-                                markers: [
-                                  Marker(
-                                    point: LatLng(latitude, longitude),
-                                    width: 80,
-                                    height: 80,
-                                    child: const Icon(
-                                      Icons.location_on,
-                                      color: Colors.red,
-                                      size: 40,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              Icon(Icons.location_on, color: primaryColor),
+                              const SizedBox(width: 6),
+                              Text(governorate, style: TextStyle(fontSize: 16, color: textColor)),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text('الوصف:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textColor)),
+                          const SizedBox(height: 6),
+                          Text(description, style: TextStyle(fontSize: 16, color: textColor)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  StreamBuilder<Map<String, dynamic>>(
+                    stream: ratingStatsStream(),
+                    builder: (context, snap) {
+                      if (!snap.hasData) return const CircularProgressIndicator();
+                      final avg = snap.data!['average'] as double;
+                      final count = snap.data!['count'] as int;
+                      return Card(
+                        color: cardColor,
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('تقييم المستخدمين ($count تقييم)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+                              averageStars(avg),
+                              Text("المتوسط: ${avg.toStringAsFixed(1)} / 5", style: TextStyle(color: textColor)),
+                              const SizedBox(height: 12),
+                              myRatingRow(),
                             ],
                           ),
                         ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCommentBox(),
+                  const SizedBox(height: 16),
+                  _buildCommentsList(),
+                  const SizedBox(height: 16),
+                  Card(
+                    color: cardColor,
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+                    child: SizedBox(
+                      height: 300,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(cardRadius),
+                        child: FlutterMap(
+                          options: MapOptions(
+                            initialCenter: LatLng(latitude, longitude),
+                            initialZoom: 13.0,
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'com.example.tourist_guide',
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: LatLng(latitude, longitude),
+                                  width: 80,
+                                  height: 80,
+                                  child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
+  }
+
+  Widget _buildImageCarousel(List<String> images) {
+    return ImageCarousel(images: images, primaryColor: primaryColor, cardRadius: cardRadius);
   }
 }
 
-// Carousel وصور كاملة
+// Carousel
 class ImageCarousel extends StatefulWidget {
   final List<String> images;
-  const ImageCarousel({required this.images, super.key});
+  final Color primaryColor;
+  final double cardRadius;
+  const ImageCarousel({required this.images, required this.primaryColor, required this.cardRadius, super.key});
 
   @override
   State<ImageCarousel> createState() => _ImageCarouselState();
@@ -433,93 +526,30 @@ class _ImageCarouselState extends State<ImageCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         SizedBox(
           height: 250,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              PageView.builder(
-                controller: _pageController,
-                itemCount: widget.images.length,
-                onPageChanged: (index) {
-                  setState(() {
-                    currentImageIndex = index;
-                  });
-                },
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => FullImageView(
-                            images: widget.images,
-                            initialIndex: index,
-                          ),
-                        ),
-                      );
-                    },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        widget.images[index],
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(child: Icon(Icons.broken_image));
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
-              if (widget.images.length > 1 && currentImageIndex > 0)
-                Positioned(
-                  left: 8,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back_ios,
-                      color: Colors.teal,
-                      size: 30,
-                    ),
-                    onPressed: () {
-                      if (currentImageIndex > 0) {
-                        _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                  ),
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.images.length,
+            onPageChanged: (index) {
+              setState(() {
+                currentImageIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(widget.cardRadius),
+                child: Image.network(
+                  widget.images[index],
+                  fit: BoxFit.cover,
+                  color: isDark ? Colors.black.withOpacity(0.2) : null,
+                  colorBlendMode: isDark ? BlendMode.darken : null,
                 ),
-              if (widget.images.length > 1 &&
-                  currentImageIndex < widget.images.length - 1)
-                Positioned(
-                  right: 8,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.teal,
-                      size: 30,
-                    ),
-                    onPressed: () {
-                      if (currentImageIndex < widget.images.length - 1) {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                  ),
-                ),
-            ],
+              );
+            },
           ),
         ),
         const SizedBox(height: 8),
@@ -531,7 +561,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
               width: currentImageIndex == index ? 12 : 8,
               height: currentImageIndex == index ? 12 : 8,
               decoration: BoxDecoration(
-                color: currentImageIndex == index ? Colors.teal : Colors.grey,
+                color: currentImageIndex == index ? widget.primaryColor : Colors.grey,
                 shape: BoxShape.circle,
               ),
             );
@@ -542,15 +572,12 @@ class _ImageCarouselState extends State<ImageCarousel> {
   }
 }
 
+// Full screen view
 class FullImageView extends StatefulWidget {
   final List<String> images;
   final int initialIndex;
 
-  const FullImageView({
-    super.key,
-    required this.images,
-    required this.initialIndex,
-  });
+  const FullImageView({super.key, required this.images, required this.initialIndex});
 
   @override
   State<FullImageView> createState() => _FullImageViewState();
@@ -596,9 +623,6 @@ class _FullImageViewState extends State<FullImageView> {
               child: Image.network(
                 widget.images[index],
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.broken_image, color: Colors.white);
-                },
               ),
             );
           },

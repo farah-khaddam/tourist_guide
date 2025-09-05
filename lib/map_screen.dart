@@ -81,9 +81,16 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.primaryColor;
+    final scaffoldColor = theme.scaffoldBackgroundColor;
+
     return Scaffold(
-      appBar:
-          AppBar(title: const Text("الخريطة"), backgroundColor: Colors.teal),
+      backgroundColor: scaffoldColor,
+      appBar: AppBar(
+        title: const Text("الخريطة"),
+        backgroundColor: primaryColor,
+      ),
       body: userLocation == null
           ? const Center(child: CircularProgressIndicator())
           : FlutterMap(

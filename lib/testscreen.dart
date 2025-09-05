@@ -32,7 +32,6 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
   void initState() {
     super.initState();
 
-    // إذا تعديل، عبي البيانات الموجودة
     if (widget.landmarkData != null) {
       final data = widget.landmarkData!.data() as Map<String, dynamic>;
 
@@ -145,10 +144,15 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.primaryColor;
+    final fillColor = theme.inputDecorationTheme.fillColor ?? Colors.white;
+
     final isEdit = widget.landmarkData != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? 'تعديل معلم' : 'إضافة معلم جديد')),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(title: Text(isEdit ? 'تعديل معلم' : 'إضافة معلم جديد'), backgroundColor: primaryColor),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -156,47 +160,66 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'اسم المعلم'),
-                  validator: (value) => value!.isEmpty ? 'أدخل الاسم' : null,
+                ...[
+                  _nameController,
+                  _descriptionController,
+                  _cityController,
+                  _typeController,
+                  _terrainController,
+                  _tripsController
+                ].map((controller) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: TextFormField(
+                        controller: controller,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: fillColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: primaryColor),
+                          ),
+                        ),
+                        validator: (value) =>
+                            value!.isEmpty ? 'لا يمكن أن يكون الحقل فارغ' : null,
+                      ),
+                    )),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _latController,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: fillColor,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: primaryColor)),
+                          labelText: 'Latitude',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) =>
+                            value!.isEmpty ? 'أدخل الإحداثي' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _lngController,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: fillColor,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: primaryColor)),
+                          labelText: 'Longitude',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) =>
+                            value!.isEmpty ? 'أدخل الإحداثي' : null,
+                      ),
+                    ),
+                  ],
                 ),
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(labelText: 'الوصف'),
-                  validator: (value) => value!.isEmpty ? 'أدخل الوصف' : null,
-                ),
-                TextFormField(
-                  controller: _cityController,
-                  decoration: const InputDecoration(labelText: 'المحافظة'),
-                  validator: (value) =>
-                      value!.isEmpty ? 'أدخل اسم المحافظة' : null,
-                ),
-                TextFormField(
-                  controller: _typeController,
-                  decoration:
-                      const InputDecoration(labelText: 'نوع المعلم (أثري، طبيعي...)'),
-                  validator: (value) => value!.isEmpty ? 'أدخل النوع' : null,
-                ),
-
-                /// ✅ حقل التضاريس
-                TextFormField(
-                  controller: _terrainController,
-                  decoration:
-                      const InputDecoration(labelText: 'وصف التضاريس والطريق'),
-                  validator: (value) =>
-                      value!.isEmpty ? 'أدخل وصف التضاريس' : null,
-                ),
-
-                /// ✅ حقل معلومات الرحلات
-                TextFormField(
-                  controller: _tripsController,
-                  decoration:
-                      const InputDecoration(labelText: 'معلومات الرحلات المتوفرة'),
-                  validator: (value) =>
-                      value!.isEmpty ? 'أدخل تفاصيل الرحلات' : null,
-                ),
-
                 const SizedBox(height: 16),
                 const Text('روابط الصور:',
                     style: TextStyle(fontWeight: FontWeight.bold)),
@@ -209,6 +232,11 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
                         child: TextFormField(
                           controller: controller,
                           decoration: InputDecoration(
+                            filled: true,
+                            fillColor: fillColor,
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: primaryColor)),
                             labelText: 'رابط صورة ${index + 1}',
                           ),
                           validator: (value) =>
@@ -225,38 +253,23 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
                 }),
                 TextButton.icon(
                   onPressed: _addImageField,
-                  icon: const Icon(Icons.add),
-                  label: const Text('إضافة صورة أخرى'),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _latController,
-                        decoration: const InputDecoration(labelText: 'Latitude'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) =>
-                            value!.isEmpty ? 'أدخل الإحداثي' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _lngController,
-                        decoration: const InputDecoration(labelText: 'Longitude'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) =>
-                            value!.isEmpty ? 'أدخل الإحداثي' : null,
-                      ),
-                    ),
-                  ],
+                  icon: Icon(Icons.add, color: primaryColor),
+                  label: Text('إضافة صورة أخرى', style: TextStyle(color: primaryColor)),
                 ),
                 const SizedBox(height: 20),
                 _isLoading
-                    ? const CircularProgressIndicator()
+                    ? CircularProgressIndicator(color: primaryColor)
                     : ElevatedButton(
                         onPressed: _addLandmark,
-                        child: Text(isEdit ? 'تعديل المعلم' : 'إضافة المعلم'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(isEdit ? 'تعديل المعلم' : 'إضافة المعلم',
+                            style: const TextStyle(color: Colors.white)),
                       ),
               ],
             ),

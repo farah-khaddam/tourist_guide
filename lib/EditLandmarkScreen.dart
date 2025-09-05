@@ -1,6 +1,8 @@
 // EditLandmarkScreen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'theme_provider.dart';
 
 class EditLandmarkScreen extends StatefulWidget {
   final DocumentSnapshot landmark;
@@ -125,7 +127,7 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم حذف المعلم بنجاح')),
         );
-        Navigator.pop(context); // خروج من شاشة التعديل
+        Navigator.pop(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('خطأ أثناء الحذف: $e')),
@@ -136,8 +138,18 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final bgColor = themeProvider.isDark ? Colors.black : const Color(0xFFFFF5E1);
+    final textColor = themeProvider.isDark ? Colors.white : Colors.orange.shade700;
+    final cardColor = themeProvider.isDark ? Colors.grey.shade900 : Colors.white;
+    final buttonColor = Colors.orange.shade700;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('تعديل المعلم')),
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: buttonColor,
+        title: const Text('تعديل المعلم'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -147,32 +159,72 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
               children: [
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'اسم المعلم'),
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
+                    labelText: 'اسم المعلم',
+                    labelStyle: TextStyle(color: textColor),
+                    filled: true,
+                    fillColor: cardColor,
+                  ),
                   validator: (value) => value!.isEmpty ? 'أدخل الاسم' : null,
                 ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _descriptionController,
-                  decoration: const InputDecoration(labelText: 'الوصف'),
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
+                    labelText: 'الوصف',
+                    labelStyle: TextStyle(color: textColor),
+                    filled: true,
+                    fillColor: cardColor,
+                  ),
                   validator: (value) => value!.isEmpty ? 'أدخل الوصف' : null,
                 ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _cityController,
-                  decoration: const InputDecoration(labelText: 'المحافظة'),
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
+                    labelText: 'المحافظة',
+                    labelStyle: TextStyle(color: textColor),
+                    filled: true,
+                    fillColor: cardColor,
+                  ),
                   validator: (value) => value!.isEmpty ? 'أدخل المحافظة' : null,
                 ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _typeController,
-                  decoration: const InputDecoration(labelText: 'نوع المعلم'),
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
+                    labelText: 'نوع المعلم',
+                    labelStyle: TextStyle(color: textColor),
+                    filled: true,
+                    fillColor: cardColor,
+                  ),
                   validator: (value) => value!.isEmpty ? 'أدخل النوع' : null,
                 ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _terrainController,
-                  decoration: const InputDecoration(labelText: 'وصف التضاريس'),
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
+                    labelText: 'وصف التضاريس',
+                    labelStyle: TextStyle(color: textColor),
+                    filled: true,
+                    fillColor: cardColor,
+                  ),
                 ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _tripInfoController,
-                  decoration:
-                      const InputDecoration(labelText: 'معلومات عن الرحلات'),
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
+                    labelText: 'معلومات عن الرحلات',
+                    labelStyle: TextStyle(color: textColor),
+                    filled: true,
+                    fillColor: cardColor,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 ..._imageControllers.asMap().entries.map((entry) {
@@ -183,8 +235,13 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: controller,
+                          style: TextStyle(color: textColor),
                           decoration: InputDecoration(
-                              labelText: 'رابط صورة ${index + 1}'),
+                            labelText: 'رابط صورة ${index + 1}',
+                            labelStyle: TextStyle(color: textColor),
+                            filled: true,
+                            fillColor: cardColor,
+                          ),
                         ),
                       ),
                       if (_imageControllers.length > 1)
@@ -194,8 +251,7 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                               _imageControllers.removeAt(index);
                             });
                           },
-                          icon: const Icon(Icons.remove_circle,
-                              color: Colors.red),
+                          icon: const Icon(Icons.remove_circle, color: Colors.red),
                         ),
                     ],
                   );
@@ -208,14 +264,21 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('إضافة صورة أخرى'),
+                  style: TextButton.styleFrom(foregroundColor: buttonColor),
                 ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
                       child: TextFormField(
                         controller: _latController,
-                        decoration:
-                            const InputDecoration(labelText: 'Latitude'),
+                        style: TextStyle(color: textColor),
+                        decoration: InputDecoration(
+                          labelText: 'Latitude',
+                          labelStyle: TextStyle(color: textColor),
+                          filled: true,
+                          fillColor: cardColor,
+                        ),
                         keyboardType: TextInputType.number,
                       ),
                     ),
@@ -223,8 +286,13 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: _lngController,
-                        decoration:
-                            const InputDecoration(labelText: 'Longitude'),
+                        style: TextStyle(color: textColor),
+                        decoration: InputDecoration(
+                          labelText: 'Longitude',
+                          labelStyle: TextStyle(color: textColor),
+                          filled: true,
+                          fillColor: cardColor,
+                        ),
                         keyboardType: TextInputType.number,
                       ),
                     ),
@@ -235,6 +303,7 @@ class _EditLandmarkScreenState extends State<EditLandmarkScreen> {
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: _updateLandmark,
+                        style: ElevatedButton.styleFrom(backgroundColor: buttonColor),
                         child: const Text('تحديث المعلم'),
                       ),
                 const SizedBox(height: 12),

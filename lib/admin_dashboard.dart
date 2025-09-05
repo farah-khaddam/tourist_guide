@@ -1,18 +1,27 @@
 // admin_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:tourist_guide/testscreen.dart';
+import 'package:provider/provider.dart';
+import 'theme_provider.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final bgColor = themeProvider.isDark ? Colors.black : Colors.white;
+    final textColor = themeProvider.isDark ? Colors.white : Colors.teal;
+    final buttonAddColor = Colors.teal;
+    final buttonEditColor = themeProvider.isDark ? Colors.grey.shade800 : Colors.grey.shade700;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: bgColor,
         appBar: AppBar(
           title: const Text("لوحة تحكم الأدمن"),
-          backgroundColor: Colors.teal,
+          backgroundColor: buttonAddColor,
           foregroundColor: Colors.white,
         ),
         body: Padding(
@@ -22,7 +31,7 @@ class AdminDashboard extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
+                  backgroundColor: buttonAddColor,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 onPressed: () {
@@ -33,24 +42,26 @@ class AdminDashboard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.add_location),
-                label: const Text(
+                label: Text(
                   "إضافة موقع سياحي",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade700,
+                  backgroundColor: buttonEditColor,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 onPressed: () {
                   // لاحقاً: تعديل أو حذف مواقع سياحية
                 },
                 icon: const Icon(Icons.edit_location_alt),
-                label: const Text(
+                label: Text(
                   "تعديل / حذف موقع",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ],

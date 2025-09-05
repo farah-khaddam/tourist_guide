@@ -2,14 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 import 'location_details_page.dart';
-import 'login_screen.dart';
+import 'settings_page.dart';
 import 'map_screen.dart';
-
 import 'package:tourist_guide/admin_dashboard.dart';
-import 'testscreen.dart'; // استيراد شاشة إضافة معلم
-import 'EditLandmarkScreen.dart'; // استيراد شاشة تعديل المعلم
+import 'EditLandmarkScreen.dart';
+import 'theme_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,34 +20,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String? selectedGovernorate;
   String? selectedType;
-  double? selectedRadius;
-  bool isGovernorateExpanded = false;
   bool isAdmin = false;
   User? currentUser;
   int _selectedIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    currentUser = FirebaseAuth.instance.currentUser;
-    checkIfAdmin();
-  }
-
-  Future<void> checkIfAdmin() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('user')
-          .doc(user.uid)
-          .get();
-      final data = doc.data();
-      if (data != null && data['isAdmin'] == true) {
-        setState(() {
-          isAdmin = true;
-        });
-      }
-    }
-  }
+  String searchQuery = '';
+  List<String> allLocations = [];
 
   final List<String> governorates = [
     'الكل',
@@ -70,32 +46,38 @@ class _HomePageState extends State<HomePage> {
 
   final List<String> types = ['الكل', 'تاريخي', 'طبيعي', 'ثقافي', 'ديني'];
 
-  final List<Map<String, dynamic>> radiusOptions = [
-    {'label': '5 كم', 'value': 5.0},
-    {'label': '10 كم', 'value': 10.0},
-    {'label': '20 كم', 'value': 20.0},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    currentUser = FirebaseAuth.instance.currentUser;
+    checkIfAdmin();
+    fetchAllLocations();
+  }
 
-  Future<void> _openMapWithRadius(double radiusKm) async {
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      permission = await Geolocator.requestPermission();
+  Future<void> checkIfAdmin() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('user')
+          .doc(user.uid)
+          .get();
+      final data = doc.data();
+      if (data != null && data['isAdmin'] == true) {
+        setState(() {
+          isAdmin = true;
+        });
+      }
     }
+  }
 
-    if (permission == LocationPermission.always ||
-        permission == LocationPermission.whileInUse) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => MapScreen(initialRadius: radiusKm)),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("يرجى السماح باستخدام الموقع لعرض الخريطة."),
-        ),
-      );
-    }
+  Future<void> fetchAllLocations() async {
+    final snapshot = await FirebaseFirestore.instance.collection('location').get();
+    final names = snapshot.docs
+        .map((doc) => (doc.data()['name'] ?? '').toString())
+        .toList();
+    setState(() {
+      allLocations = names;
+    });
   }
 
   void _onItemTapped(int index) {
@@ -103,339 +85,317 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
 
-    if (index == 1) {
-      // خريطة
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => MapScreen(initialRadius: selectedRadius ?? 5.0),
-        ),
-      );
-    } else if (index == 2) {
-      // بروفايل أو تسجيل الدخول
-      if (currentUser == null) {
+    switch (index) {
+      case 0:
+        break;
+      case 1:
+        _showSearchDialog();
+        break;
+      case 2:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          MaterialPageRoute(builder: (_) => MapScreen(initialRadius: 5.0)),
         );
-      }
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SettingsPage()),
+        );
+        break;
     }
+  }
+
+  void _showFilterChoiceDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final bgColor = themeProvider.isDark ? Colors.black : const Color(0xFFFFF5E1);
+    final btnColor = themeProvider.isDark ? themeProvider.orangeDark : Colors.orange.shade700;
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: bgColor,
+        title: Text(
+          "اختر نوع التصفية",
+          style: TextStyle(color: btnColor),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: btnColor),
+              onPressed: () {
+                Navigator.pop(context);
+                _showFilterDialog(isGovernorate: true);
+              },
+              child: const Text("حسب المحافظة"),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: btnColor),
+              onPressed: () {
+                Navigator.pop(context);
+                _showFilterDialog(isGovernorate: false);
+              },
+              child: const Text("حسب نوع المعلم"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFilterDialog({required bool isGovernorate}) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final bgColor = themeProvider.isDark ? Colors.black : const Color(0xFFFFF5E1);
+    final textColor = themeProvider.isDark ? Colors.white : Colors.orange;
+
+    showModalBottomSheet(
+      backgroundColor: bgColor,
+      context: context,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isGovernorate ? "تصفية حسب المحافظة" : "تصفية حسب النوع",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: isGovernorate ? selectedGovernorate : selectedType,
+              decoration: InputDecoration(
+                labelText: isGovernorate ? 'المحافظة' : 'نوع المعلم',
+                border: const OutlineInputBorder(),
+              ),
+              items: (isGovernorate ? governorates : types)
+                  .map((item) => DropdownMenuItem(
+                        value: item,
+                        child: Text(item, style: TextStyle(color: textColor)),
+                      ))
+                  .toList(),
+              onChanged: (val) {
+                setState(() {
+                  if (isGovernorate) {
+                    selectedGovernorate = val;
+                  } else {
+                    selectedType = val;
+                  }
+                });
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSearchDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final bgColor = themeProvider.isDark ? Colors.black : const Color(0xFFFFF5E1);
+    final textColor = themeProvider.isDark ? Colors.white : Colors.orange;
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: bgColor,
+        title: Text("ابحث عن معلم", style: TextStyle(color: textColor)),
+        content: Autocomplete<String>(
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
+            return allLocations.where(
+              (name) => name.toLowerCase().contains(textEditingValue.text.toLowerCase()),
+            );
+          },
+          onSelected: (String selection) async {
+            final snapshot = await FirebaseFirestore.instance
+                .collection('location')
+                .where('name', isEqualTo: selection)
+                .get();
+            if (snapshot.docs.isNotEmpty) {
+              final doc = snapshot.docs.first;
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LocationDetailsPage(locationId: doc.id),
+                ),
+              );
+            }
+          },
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            controller.text = searchQuery;
+            return TextField(
+              controller: controller,
+              focusNode: focusNode,
+              style: TextStyle(color: textColor),
+              decoration: InputDecoration(
+                hintText: "اكتب أي شيء...",
+                hintStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                border: const OutlineInputBorder(),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final bgColor = themeProvider.isDark ? Colors.black : const Color(0xFFFFF5E1);
+    final cardColor = themeProvider.isDark ? Colors.grey.shade900 : const Color(0xFFFFF5E1);
+    final textColor = themeProvider.isDark ? Colors.white : Colors.orange.shade700;
+    final navBarColor = themeProvider.isDark ? Colors.grey.shade900 : Colors.orange.shade700;
+
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('المواقع السياحية'),
-        backgroundColor: Colors.orange.shade700,
+        backgroundColor: navBarColor,
+        leading: IconButton(
+          icon: const Icon(Icons.filter_list),
+          onPressed: _showFilterChoiceDialog,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("لا توجد إشعارات حالياً.")),
+              );
+            },
+            color: Colors.white,
+          ),
           if (isAdmin)
             IconButton(
               icon: const Icon(Icons.admin_panel_settings),
-              tooltip: 'لوحة التحكم',
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const AdminDashboard()),
                 );
               },
+              color: Colors.white,
             ),
-          currentUser != null
-              ? Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundImage: NetworkImage(
-                        currentUser!.photoURL ?? 'https://i.pravatar.cc/150',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      currentUser!.displayName ?? currentUser!.email ?? "",
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.logout),
-                      tooltip: 'تسجيل خروج',
-                      onPressed: () async {
-                        await FirebaseAuth.instance.signOut();
-                        setState(() {
-                          currentUser = null;
-                        });
-                      },
-                    ),
-                  ],
-                )
-              : IconButton(
-                  icon: const Icon(Icons.login),
-                  tooltip: 'تسجيل الدخول',
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
-                    setState(() {
-                      currentUser = FirebaseAuth.instance.currentUser;
-                    });
-                  },
-                ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: selectedType,
-                    decoration: const InputDecoration(
-                      labelText: 'نوع المعلم',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: types
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (val) => setState(() => selectedType = val),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<double>(
-                    value: selectedRadius,
-                    decoration: const InputDecoration(
-                      labelText: 'المواقع القريبة',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: radiusOptions.map((option) {
-                      return DropdownMenuItem<double>(
-                        value: option['value'],
-                        child: Text(option['label']),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => selectedRadius = val);
-                        _openMapWithRadius(val);
-                      }
-                    },
-                    hint: const Text('اختر المسافة'),
-                  ),
-                ),
-              ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('location').snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+
+          final docs = snapshot.data!.docs;
+          final locations = docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final governorate = data['governorate'];
+            final type = data['type'];
+            final name = (data['name'] ?? '').toLowerCase();
+            final query = searchQuery.toLowerCase();
+
+            return (selectedGovernorate == null ||
+                    selectedGovernorate == 'الكل' ||
+                    governorate == selectedGovernorate) &&
+                (selectedType == null ||
+                    selectedType == 'الكل' ||
+                    type == selectedType) &&
+                (name.contains(query));
+          }).toList();
+
+          return GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 3 / 4,
             ),
-          ),
-          GestureDetector(
-            onTap: () =>
-                setState(() => isGovernorateExpanded = !isGovernorateExpanded),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.orange.shade700),
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.orange.shade100.withOpacity(0.3),
-              ),
-              child: isGovernorateExpanded
-                  ? Wrap(
-                      spacing: 8,
-                      children: governorates.map((g) {
-                        final selected = selectedGovernorate == g;
-                        return ChoiceChip(
-                          label: Text(g),
-                          selected: selected,
-                          selectedColor: Colors.orange.shade700,
-                          labelStyle: TextStyle(
-                            color: selected ? Colors.white : Colors.orange,
-                          ),
-                          onSelected: (_) {
-                            setState(() {
-                              selectedGovernorate = g;
-                              isGovernorateExpanded = false;
-                            });
-                          },
-                        );
-                      }).toList(),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+            itemCount: locations.length,
+            itemBuilder: (context, index) {
+              final doc = locations[index];
+              final data = doc.data() as Map<String, dynamic>;
+              final imageUrl = data['imageUrl'] ?? '';
+              final name = data['name'] ?? 'بدون اسم';
+
+              return Card(
+                color: cardColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 3,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => LocationDetailsPage(locationId: doc.id),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.location_city, color: Colors.orange),
-                        const SizedBox(width: 8),
-                        Text(
-                          selectedGovernorate ?? 'اختر المحافظة',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange,
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: imageUrl.isNotEmpty
+                                ? Image.network(
+                                    imageUrl,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Icon(
+                                    Icons.location_on,
+                                    size: 60,
+                                    color: textColor,
+                                  ),
                           ),
                         ),
-                        const Icon(Icons.arrow_drop_down, color: Colors.orange),
+                        const SizedBox(height: 8),
+                        Text(
+                          name,
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          data['governorate'] ?? '',
+                          style: TextStyle(color: textColor),
+                        ),
                       ],
                     ),
-            ),
-          ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('location')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final docs = snapshot.data!.docs;
-                final locations = docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final governorate = data['governorate'];
-                  final type = data['type'];
-                  return (selectedGovernorate == null ||
-                          selectedGovernorate == 'الكل' ||
-                          governorate == selectedGovernorate) &&
-                      (selectedType == null ||
-                          selectedType == 'الكل' ||
-                          type == selectedType);
-                }).toList();
-
-                return GridView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
                   ),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 3 / 4,
-                  ),
-                  itemCount: locations.length,
-                  itemBuilder: (context, index) {
-                    final doc = locations[index];
-                    final data = doc.data() as Map<String, dynamic>;
-                    final imageUrl = data['imageUrl'] ?? '';
-                    final name = data['name'] ?? 'بدون اسم';
-
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 3,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  LocationDetailsPage(locationId: doc.id),
-                            ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: imageUrl.isNotEmpty
-                                      ? Image.network(
-                                          imageUrl,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                          loadingBuilder:
-                                              (context, child, progress) {
-                                            if (progress == null) return child;
-                                            return const Center(
-                                              child:
-                                                  CircularProgressIndicator(),
-                                            );
-                                          },
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            return const Center(
-                                              child: Icon(
-                                                Icons.broken_image,
-                                              ),
-                                            );
-                                          },
-                                        )
-                                      : const Icon(
-                                          Icons.location_on,
-                                          size: 60,
-                                          color: Colors.orange,
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                data['governorate'] ?? '',
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      color: Colors.orange,
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              EditLandmarkScreen(landmark: doc),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+                ),
+              );
+            },
+          );
+        },
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.orange.shade100,
-        selectedItemColor: Colors.orange.shade700,
-        unselectedItemColor: Colors.brown.shade300,
+        backgroundColor: navBarColor,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: themeProvider.isDark ? Colors.white70 : Colors.orange.shade100,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: "الرئيسية",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: "الخريطة",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "حسابي",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: "بحث"),
+          BottomNavigationBarItem(icon: Icon(Icons.map_outlined), label: "الخريطة"),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "الإعدادات"),
         ],
       ),
     );
