@@ -18,6 +18,7 @@ class LocationDetailsPage extends StatefulWidget {
 class _LocationDetailsPageState extends State<LocationDetailsPage> {
   int currentImageIndex = 0;
   late final PageController _pageController;
+  final TextEditingController _commentController = TextEditingController();
   bool isSaved = false;
   String? userId;
 
@@ -35,6 +36,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   @override
   void dispose() {
     _pageController.dispose();
+    _commentController.dispose();
     super.dispose();
   }
 
@@ -49,7 +51,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
 
   Future<bool> isBookmarked(String userId, String locationId) async {
     final snapshot = await FirebaseFirestore.instance
-        .collection('bookmarks')
+        .collection('bookmark')
         .where('userId', isEqualTo: userId)
         .where('locationId', isEqualTo: locationId)
         .get();
@@ -57,7 +59,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   }
 
   Future<void> addBookmark(String userId, String locationId) async {
-    await FirebaseFirestore.instance.collection('bookmarks').add({
+    await FirebaseFirestore.instance.collection('bookmark').add({
       'userId': userId,
       'locationId': locationId,
       'timestamp': Timestamp.now(),
@@ -66,7 +68,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
 
   Future<void> removeBookmark(String userId, String locationId) async {
     final snapshot = await FirebaseFirestore.instance
-        .collection('bookmarks')
+        .collection('bookmark')
         .where('userId', isEqualTo: userId)
         .where('locationId', isEqualTo: locationId)
         .get();
@@ -75,19 +77,74 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     }
   }
 
+  Future<void> addComment(String text) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // لو المستخدم مو مسجل دخول نعمل Dialog
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("مطلوب تسجيل الدخول"),
+          content: const Text("يجب تسجيل الدخول لكتابة تعليق."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("إلغاء"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => LoginScreen()),
+                );
+              },
+              child: const Text("تسجيل دخول"),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    print("DEBUG: user.displayName = ${user.displayName}");
+    print("DEBUG: user.email = ${user.email}");
+    final commentName = user.displayName ?? user.email ?? "مستخدم";
+    print("DEBUG: Final comment name = $commentName");
+    await FirebaseFirestore.instance.collection('comment').add({
+      'userId': user.uid,
+      'name': commentName,
+      'locationId': widget.locationId,
+      'text': text,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    _commentController.clear();
+  }
+
+  Stream<QuerySnapshot> commentsStream() {
+    return FirebaseFirestore.instance
+        .collection('comment')
+        .where('locationId', isEqualTo: widget.locationId)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+        
+  }
+
   Future<void> submitRating(int rating) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    await FirebaseFirestore.instance
-        .collection('location')
-        .doc(widget.locationId)
+    final ratingDoc = FirebaseFirestore.instance
         .collection('ratings')
-        .doc(user.uid)
-        .set({
-          'rating': rating,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        .doc('${widget.locationId}_${user.uid}');
+
+    await ratingDoc.set({
+      'locationId': widget.locationId,
+      'userId': user.uid,
+      'rating': rating.toDouble(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   void onStarPressed(int rating) {
@@ -125,17 +182,19 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   /// إحصائيات التقييمات بشكل Stream لتتحدث لحظياً
   Stream<Map<String, dynamic>> ratingStatsStream() {
     return FirebaseFirestore.instance
-        .collection('location')
-        .doc(widget.locationId)
         .collection('ratings')
+        .where('locationId', isEqualTo: widget.locationId)
         .snapshots()
         .map((snapshot) {
-          int total = 0, sum = 0;
+          double sum = 0;
+          int total = snapshot.docs.length;
+
           for (var doc in snapshot.docs) {
-            final r = (doc.data()['rating'] ?? 0) as int;
+            final data = doc.data();
+            final r = (data['rating'] ?? 0).toDouble();
             sum += r;
-            total++;
           }
+
           final avg = total > 0 ? sum / total : 0.0;
           return {'average': avg};
         });
@@ -158,16 +217,14 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
 
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('location')
-          .doc(widget.locationId)
           .collection('ratings')
-          .doc(uid)
+          .doc('${widget.locationId}_$uid')
           .snapshots(),
       builder: (context, snap) {
         int myRating = 0;
         if (snap.hasData && snap.data!.exists) {
           final d = snap.data!.data() as Map<String, dynamic>;
-          myRating = (d['rating'] ?? 0) as int;
+          myRating = ((d['rating'] ?? 0).toDouble()).round();
         }
         return Row(
           children: List.generate(5, (i) {
@@ -354,6 +411,82 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                       },
                     ),
 
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        "التعليقات:",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // إدخال تعليق
+                    if (FirebaseAuth.instance.currentUser != null)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _commentController,
+                              decoration: const InputDecoration(
+                                hintText: "أضف تعليقك...",
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.send, color: Colors.teal),
+                            onPressed: () {
+                              if (_commentController.text.trim().isNotEmpty) {
+                                addComment(_commentController.text.trim());
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 12),
+
+                    // عرض التعليقات
+                    StreamBuilder<QuerySnapshot>(
+                      stream: commentsStream(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        final docs = snapshot.data!.docs;
+                        if (docs.isEmpty) {
+                          return const Text("لا يوجد تعليقات بعد.");
+                        }
+
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: docs.length,
+                          itemBuilder: (context, index) {
+                            final c =
+                                docs[index].data() as Map<String, dynamic>;
+                            final text = c['text'] ?? "";
+                            final name = c['name'] ?? "مجهول";
+
+                            return ListTile(
+                              leading: const Icon(Icons.person),
+                              title: Text(
+                                name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(text),
+                            );
+                          },
+                        );
+                      },
+                    ),
                     const SizedBox(height: 16),
                     Card(
                       elevation: 4,

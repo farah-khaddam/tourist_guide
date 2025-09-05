@@ -96,23 +96,39 @@ class _LoginScreenState extends State<LoginScreen> {
                           }
 
                           try {
-                            final userSnap = await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(email)
-                                .get();
-                            if (userSnap.exists &&
-                                userSnap.data()!['appPassword'] == password) {
-                              setState(() {
-                                loggedName = userSnap.data()!['name'];
-                                loggedPhoto = userSnap.data()!['photo'];
-                              });
-                              showSnackBar(context, "تم تسجيل الدخول بنجاح!");
-                            } else {
-                              showSnackBar(
-                                context,
-                                "البريد أو كلمة المرور غير صحيحة",
-                              );
+                            await _auth.signInWithEmailAndPassword(
+                              email: email,
+                              password: password,
+                            );
+                            setState(() {
+                              loggedName = _auth.currentUser!.displayName ??
+                                  _auth.currentUser!.email;
+                              loggedPhoto = _auth.currentUser!.photoURL;
+                            });
+                            // Update user's display name if not already set
+                            if (_auth.currentUser?.displayName == null) {
+                              final userDoc = await FirebaseFirestore.instance
+                                  .collection('user')
+                                  .doc(email)
+                                  .get();
+                              if (userDoc.exists && userDoc.data()!['name'] != null) {
+                                await _auth.currentUser!.updateDisplayName(
+                                    userDoc.data()!['name']);
+                              }
                             }
+                            showSnackBar(context, "تم تسجيل الدخول بنجاح!");
+                          } on FirebaseAuthException catch (e) {
+                            String message = "حدث خطأ غير معروف.";
+                            if (e.code == 'user-not-found') {
+                              message = "لا يوجد مستخدم بهذا البريد الإلكتروني.";
+                            } else if (e.code == 'wrong-password') {
+                              message = "كلمة المرور غير صحيحة.";
+                            } else if (e.code == 'invalid-email') {
+                              message = "صيغة البريد الإلكتروني غير صحيحة.";
+                            } else if (e.code == 'user-disabled') {
+                              message = "تم تعطيل هذا الحساب.";
+                            }
+                            showSnackBar(context, message);
                           } catch (e) {
                             showSnackBar(context, "فشل تسجيل الدخول: $e");
                           }
@@ -140,11 +156,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             // حفظ البريد في Firestore إذا جديد
                             await FirebaseFirestore.instance
-                                .collection('users')
+                                .collection('user')
                                 .doc(userCredential.user!.email)
                                 .set({
                                   'email': userCredential.user!.email,
-                                  'name': userCredential.user!.displayName,
+                                  'name': userCredential.user!.displayName ?? googleUser.displayName ?? userCredential.user!.email,
                                   'photo': userCredential.user!.photoURL,
                                 }, SetOptions(merge: true));
 
@@ -154,6 +170,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                   userCredential.user!.email;
                               loggedPhoto = userCredential.user!.photoURL;
                             });
+
+                            // Update user's display name if not already set for Google Sign-In
+                            if (userCredential.user?.displayName == null &&
+                                userCredential.user?.email != null) {
+                              final userDoc = await FirebaseFirestore.instance
+                                  .collection('user')
+                                  .doc(userCredential.user!.email)
+                                  .get();
+                              if (userDoc.exists && userDoc.data()!['name'] != null) {
+                                await userCredential.user!.updateDisplayName(
+                                    userDoc.data()!['name']);
+                              }
+                            }
 
                             showSnackBar(
                               context,

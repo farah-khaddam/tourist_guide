@@ -130,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     // حفظ اسم وبريد المستخدم مؤقتًا في Firestore
-    await FirebaseFirestore.instance.collection('users').doc(email).set({
+    await FirebaseFirestore.instance.collection('user').doc(email).set({
       'name': name,
       'email': email,
     }, SetOptions(merge: true));
