@@ -84,44 +84,40 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onItemTapped(int index) {
-  setState(() {
-    _selectedIndex = index;
-  });
+    setState(() {
+      _selectedIndex = index;
+    });
 
-  switch (index) {
-    case 0: // الرئيسية
-      setState(() {
-        selectedGovernorate = null;
-        selectedType = null;
-        searchQuery = '';
-      });
-      break;
-    case 1:
-      _showSearchDialog();
-      break;
-    case 2:
-      // أول ما يضغط على الخريطة، نظهر رسالة توضيحية 5 ثواني
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-           content: Text("يمكنك اختيار المسافة للمواقع القريبة من الاعلى"), 
+    switch (index) {
+      case 0: // الرئيسية
+        setState(() {
+          selectedGovernorate = null;
+          selectedType = null;
+          searchQuery = '';
+        });
+        break;
+      case 1:
+        _showSearchDialog();
+        break;
+      case 2:
+        // أول ما يضغط على الخريطة، نظهر رسالة توضيحية 5 ثواني
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("يمكنك اختيار المسافة للمواقع القريبة من الاعلى"),
 
-          duration: Duration(seconds: 5),
-        ),
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => MapScreen()),
-      );
-      break;
-    case 3:
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const SettingsPage()),
-      );
-      break;
+            duration: Duration(seconds: 5),
+          ),
+        );
+        Navigator.push(context, MaterialPageRoute(builder: (_) => MapScreen()));
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SettingsPage()),
+        );
+        break;
+    }
   }
-}
-
 
   void _showFilterChoiceDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
@@ -212,6 +208,7 @@ class _HomePageState extends State<HomePage> {
                 Navigator.pop(context);
               },
             ),
+            const SizedBox(height: 12),
           ],
         ),
       ),

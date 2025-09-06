@@ -34,6 +34,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/Aleppo
     #- packages/intl_phone_field/assets/flags/
 flutter_icons:
   android: true
