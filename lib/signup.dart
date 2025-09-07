@@ -1,6 +1,7 @@
 // signup.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'theme_controller.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -12,37 +13,55 @@ class _SignUpPageState extends State<SignUpPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   final _emailController = TextEditingController();
+  final _nameController = TextEditingController(); 
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
   Future<void> _signUp() async {
-    if (_emailController.text.trim().isEmpty ||
-        _passwordController.text.trim().isEmpty ||
-        _confirmPasswordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("لا يمكن أن تكون الحقول فارغة ❌")),
-      );
-      return;
+
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("لا يمكن أن تكون الحقول فارغة ❌")),
+    );
+    return;
     }
 
-    if (_passwordController.text.trim() != _confirmPasswordController.text.trim()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("كلمتا المرور غير متطابقتين ❌")),
-      );
-      return;
+    if (password != confirmPassword) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("كلمتا المرور غير متطابقتين ❌")),
+    );
+    return;
     }
 
     setState(() => _isLoading = true);
+
     try {
-      await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
       );
+
+      await FirebaseFirestore.instance
+        .collection('user')
+        .doc(userCredential.user!.uid)
+        .set({
+      'name': name,
+      'email': email,
+      'isAdmin': false, // بشكل افتراضي
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("تم إنشاء الحساب بنجاح 🎉")),
       );
       Navigator.pop(context);
+      Navigator.pop(context);
+
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'weak-password') {
@@ -77,6 +96,20 @@ class _SignUpPageState extends State<SignUpPage> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                TextField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: "الاسم",
+                    filled: true,
+                    fillColor: theme.inputDecorationTheme.fillColor,
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: primaryColor),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,

@@ -37,6 +37,7 @@ class _LogOrSignState extends State<LogOrSign> {
       if (widget.redirectPage != null) {
         widget.redirectPage!();
       } else {
+        Navigator.pop(context);
         // توجيه افتراضي للصفحة الرئيسية
         // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomePage()));
       }
