@@ -1,9 +1,12 @@
 // Login.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'signup.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 
 class LogOrSign extends StatefulWidget {
   final VoidCallback? redirectPage; // <-- أضفنا هذا
@@ -14,12 +17,79 @@ class LogOrSign extends StatefulWidget {
   _LogOrSignState createState() => _LogOrSignState();
 }
 
+
 class _LogOrSignState extends State<LogOrSign> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+
+Future<void> _loginWithGoogle() async {
+  try {
+    setState(() => _isLoading = true);
+
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) {
+      // المستخدم لغى العملية
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    await _auth.signInWithCredential(credential);
+
+    // (اختياري) إنشاء وثيقة للمستخدم في Firestore إذا ما كانت موجودة
+    // حتى تقدر تجيب "name" لاحقاً للكومنتات
+    try {
+      final u = _auth.currentUser;
+      if (u != null) {
+        final docRef = FirebaseFirestore.instance.collection('user').doc(u.uid);
+        final doc = await docRef.get();
+        if (!doc.exists) {
+          await docRef.set({
+            'name': u.displayName ?? 'بدون اسم',
+            'email': u.email,
+            'isAdmin': false,
+          });
+        }
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("تم تسجيل الدخول بحساب Google 🎉")),
+    );
+
+    // نفس منطق الإرجاع يلي عملتو بتسجيل الإيميل/كلمة السر
+    if (widget.redirectPage != null) {
+      widget.redirectPage!();
+    } else {
+      Navigator.pop(context, true);
+    }
+  } on FirebaseAuthException catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("فشل تسجيل الدخول: ${e.message ?? e.code}")),
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("فشل تسجيل الدخول: $e")),
+    );
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+}
+
+
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
@@ -42,6 +112,8 @@ class _LogOrSignState extends State<LogOrSign> {
         // توجيه افتراضي للصفحة الرئيسية
         // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomePage()));
       //} 
+    
+      
 
     } on FirebaseAuthException catch (e) {
       String message = '';
@@ -169,11 +241,30 @@ class _LogOrSignState extends State<LogOrSign> {
                       MaterialPageRoute(builder: (context) => SignUpPage()),
                     );
                   },
+                  
                   child: Text(
                     "مستخدم جديد؟ أنشئ حساب",
                     style: TextStyle(color: orangeColor),
                   ),
                 ),
+                const SizedBox(height: 10),
+                  Material(
+                  color: Colors.transparent, // 👈 حتى ما يطلع خلفية
+                  child: InkWell(
+                    onTap: _loginWithGoogle,
+                    child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20), // حواف دائرية حسب الرقم
+                    child: Image.asset(
+                      "assets/images/google.png",
+                      height: 150, // ارتفاع الصورة
+                      width: 150,  // عرض الصورة
+                      fit: BoxFit.contain, // يحافظ على ملء الحاوية بدون تشويه
+                    ),
+                  ),
+                                ),
+                ),
+
+
               ],
             ),
           ),
@@ -182,3 +273,4 @@ class _LogOrSignState extends State<LogOrSign> {
     );
   }
 }
+
