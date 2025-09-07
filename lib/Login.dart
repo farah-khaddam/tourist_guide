@@ -33,14 +33,15 @@ class _LogOrSignState extends State<LogOrSign> {
         const SnackBar(content: Text("تم تسجيل الدخول بنجاح 🎉")),
       );
 
+      Navigator.pop(context, true);
       // استدعاء دالة إعادة التوجيه إذا موجودة
-      if (widget.redirectPage != null) {
-        widget.redirectPage!();
-      } else {
-        Navigator.pop(context);
+      //if (widget.redirectPage != null) {
+       // widget.redirectPage!();
+      //} else {
+        //Navigator.pop(context);
         // توجيه افتراضي للصفحة الرئيسية
         // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomePage()));
-      }
+      //} 
 
     } on FirebaseAuthException catch (e) {
       String message = '';
