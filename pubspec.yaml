@@ -1,4 +1,4 @@
-name: tourist_guide
+name: TRIPSY
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -38,4 +38,4 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/images/photo_2025-09-05_13-48-38.jpg"
+  image_path: "assets/images/loogo1.jpg"

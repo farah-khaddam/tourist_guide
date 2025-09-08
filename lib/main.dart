@@ -2,8 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'package:tourist_guide/settings_page.dart';
-import 'package:tourist_guide/splash_screen.dart';
+import 'package:TRIPSY/splash_screen.dart';
 import 'firebase_options.dart';
 import 'theme_provider.dart';
 
@@ -31,7 +30,7 @@ class MyApp extends StatelessWidget {
       theme: themeProvider.lightTheme,
       darkTheme: themeProvider.darkTheme,
       themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
-      home: SplashScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

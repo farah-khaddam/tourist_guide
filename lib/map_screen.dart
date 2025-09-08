@@ -1,4 +1,5 @@
 // map_screen.dart
+import 'dart:math' show cos, sqrt, asin;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -10,11 +11,7 @@ class MapScreen extends StatefulWidget {
   final LatLng? oldPoint;
   final bool justForShow;
 
-  const MapScreen({
-    super.key,
-    this.oldPoint,
-    this.justForShow = false,
-  });
+  const MapScreen({super.key, this.oldPoint, this.justForShow = false});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -27,7 +24,9 @@ class _MapScreenState extends State<MapScreen> {
   List<Marker> nearbyMarkers = [];
   LatLng? _pickedLocation;
   double zoom = 13.0;
-  double selectedRadius = 5; // القيمة الافتراضية 5 كم
+
+  double? filterDistanceKm; // null = كل المعالم
+  List<Map<String, dynamic>> allMarkersData = []; // تحميل المعالم مرة واحدة
 
   @override
   void initState() {
@@ -35,33 +34,36 @@ class _MapScreenState extends State<MapScreen> {
     _checkLocationPermission();
   }
 
-  Future<void> _checkLocationPermission() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const p = 0.017453292519943295;
+    final a = 0.5 -
+        cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a));
+  }
 
-    // التحقق من خدمة الموقع
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  Future<void> _checkLocationPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("يرجى تفعيل خدمة الموقع")));
       return;
     }
 
-    // التحقق من الإذن
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("تم رفض إذن الموقع")));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("تم رفض إذن الموقع")));
         return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              "تم رفض إذن الموقع بشكل دائم. يرجى تمكينه من إعدادات الهاتف")));
+          content:
+              Text("تم رفض إذن الموقع بشكل دائم. يرجى تمكينه من إعدادات الهاتف")));
       return;
     }
 
@@ -71,145 +73,270 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _getUserLocation() async {
     final pos = await Geolocator.getCurrentPosition();
     setState(() => userLocation = pos);
-    _loadNearbyLocations();
+    _loadNearbyLocations(initialLoad: true);
   }
 
-  Future<void> _loadNearbyLocations() async {
+  Future<void> _loadNearbyLocations({bool initialLoad = false}) async {
     if (userLocation == null) return;
 
-    final snapshot =
-        await FirebaseFirestore.instance.collection('location').get();
-    final docs = snapshot.docs;
-    const Distance distance = Distance();
+    if (initialLoad) {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('location').get();
 
-    // تصفية المعالم حسب المسافة
-    final filtered = docs.where((doc) {
-      final data = doc.data();
-      final lat = data['latitude'];
-      final lng = data['longitude'];
+      allMarkersData.clear();
 
-      if (lat == null || lng == null) return false;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final List<String> images = List<String>.from(data['images'] ?? []);
+        final lat = (data['latitude'] as num).toDouble();
+        final lng = (data['longitude'] as num).toDouble();
 
-      final d = distance.as(
-        LengthUnit.Kilometer,
-        LatLng(userLocation!.latitude, userLocation!.longitude),
-        LatLng(lat, lng),
-      );
+        final ratingsSnapshot = await FirebaseFirestore.instance
+            .collection('location')
+            .doc(doc.id)
+            .collection('ratings')
+            .get();
 
-      return d <= selectedRadius;
-    }).toList();
+        double averageRating = 0;
+        int ratingsCount = ratingsSnapshot.docs.length;
 
-    // إنشاء Marker لكل موقع قريب
-    final markers = filtered.map((doc) {
-      final data = doc.data();
-      final List<dynamic> images = data['imageUrls'] ?? []; // صور المعلم
+        if (ratingsCount > 0) {
+          double sum = 0;
+          for (var r in ratingsSnapshot.docs) {
+            sum += (r['rating'] ?? 0).toDouble();
+          }
+          averageRating = sum / ratingsCount;
+        }
 
-      return Marker(
-        width: 50,
-        height: 50,
-        point: LatLng(data['latitude'], data['longitude']),
-        child: GestureDetector(
-          onTap: () {
-            // عند الضغط على Marker
-            showDialog(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: Text(data['name'] ?? 'موقع'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // عرض صور المعلم
-                    if (images.isNotEmpty)
-                      SizedBox(
-                        height: 100,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: images.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 8),
-                          itemBuilder: (context, index) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                images[index],
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    const SizedBox(height: 10),
+        allMarkersData.add({
+          'doc': doc,
+          'data': data,
+          'lat': lat,
+          'lng': lng,
+          'images': images,
+          'averageRating': averageRating,
+          'ratingsCount': ratingsCount,
+        });
+      }
+    }
 
-                    // متوسط التقييم
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber),
-                        const SizedBox(width: 5),
-                        Text(
-                          (data['averageRating'] ?? 0).toStringAsFixed(1),
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
+    final List<Marker> markers = [];
+    for (var item in allMarkersData) {
+      final distance = _calculateDistance(userLocation!.latitude,
+          userLocation!.longitude, item['lat'], item['lng']);
+      if (filterDistanceKm != null && distance > filterDistanceKm!) continue;
 
-                    // زر التفاصيل
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context); // إغلاق الـ Dialog
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                LocationDetailsPage(locationId: doc.id),
-                          ),
-                        );
-                      },
-                      child: const Text("عرض التفاصيل"),
-                    ),
+      markers.add(
+        Marker(
+          width: 150,
+          height: 70,
+          point: LatLng(item['lat'], item['lng']),
+          child: Column(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 3,
+                      offset: const Offset(0, 2),
+                    )
                   ],
                 ),
+                child: Text(
+                  item['data']['name'] ?? '',
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.bold),
+                ),
               ),
-            );
-          },
-          child: const Icon(Icons.location_on, size: 40, color: Color.fromARGB(255, 220, 104, 8)),
+              const SizedBox(height: 2),
+              GestureDetector(
+                onTap: () {
+                  _showLocationBottomSheet(
+                    item['doc'],
+                    item['lat'],
+                    item['lng'],
+                    item['images'],
+                    item['averageRating'],
+                    item['ratingsCount'],
+                  );
+                },
+                child: const Icon(
+                  Icons.location_on,
+                  size: 40,
+                  color: Color.fromARGB(255, 220, 104, 8),
+                ),
+              ),
+            ],
+          ),
         ),
       );
-    }).toList();
+    }
 
     setState(() => nearbyMarkers = markers);
   }
 
-  void _changeRadius(double radius) {
-    setState(() {
-      selectedRadius = radius;
+  void _showLocationBottomSheet(
+      QueryDocumentSnapshot doc,
+      double lat,
+      double lng,
+      List<String> images,
+      double averageRating,
+      int ratingsCount) {
+    final distance = _calculateDistance(
+        userLocation!.latitude, userLocation!.longitude, lat, lng);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              doc['name'] ?? 'موقع',
+              style:
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            if (images.isNotEmpty)
+              SizedBox(
+                height: 180,
+                child: PageView.builder(
+                  itemCount: images.length,
+                  controller: PageController(viewportFraction: 0.9),
+                  itemBuilder: (context, index) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        images[index],
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        },
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                          Icons.broken_image,
+                          size: 80,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              const Text("لا توجد صور متاحة لهذا الموقع"),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.place, color: Colors.redAccent),
+                const SizedBox(width: 5),
+                Text("${distance.toStringAsFixed(2)} كم"),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.star, color: Colors.amber),
+                const SizedBox(width: 5),
+                Text(
+                  averageRating.toStringAsFixed(1),
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(width: 5),
+                Text("($ratingsCount تقييم)"),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            LocationDetailsPage(locationId: doc.id)),
+                  );
+                },
+                child: const Text("عرض التفاصيل"),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFilterDialog() {
+    showDialog<double?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("اختر مسافة"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text("5 كم"),
+              onTap: () => Navigator.pop(ctx, 5.0),
+            ),
+            ListTile(
+              title: const Text("10 كم"),
+              onTap: () => Navigator.pop(ctx, 10.0),
+            ),
+            ListTile(
+              title: const Text("20 كم"),
+              onTap: () => Navigator.pop(ctx, 20.0),
+            ),
+            ListTile(
+              title: const Text("أكثر"),
+              onTap: () => Navigator.pop(ctx, null),
+            ),
+          ],
+        ),
+      ),
+    ).then((selected) {
+      if (selected == null && filterDistanceKm == null) return;
+
+      setState(() => filterDistanceKm = selected);
+      _loadNearbyLocations(initialLoad: false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(selected != null
+              ? "تم اختيار $selected كم"
+              : "تم عرض كل المعالم"),
+        ),
+      );
     });
-    _loadNearbyLocations();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primaryColor = theme.primaryColor;
-    final scaffoldColor = theme.scaffoldBackgroundColor;
 
     return Scaffold(
-      backgroundColor: scaffoldColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("الخريطة"),
-        backgroundColor: primaryColor,
+        backgroundColor: theme.primaryColor,
         actions: [
-          if (!widget.justForShow)
-            PopupMenuButton<double>(
-              onSelected: _changeRadius,
-              icon: const Icon(Icons.filter_alt),
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 5, child: Text("5 كم")),
-                PopupMenuItem(value: 10, child: Text("10 كم")),
-                PopupMenuItem(value: 20, child: Text("20 كم")),
-              ],
-            ),
+          IconButton(
+            icon: const Icon(Icons.filter_alt),
+            onPressed: _showFilterDialog,
+          ),
         ],
       ),
       body: userLocation == null
@@ -222,30 +349,29 @@ class _MapScreenState extends State<MapScreen> {
                 initialZoom: zoom,
                 onTap: (tapPosition, point) {
                   if (!widget.justForShow) {
-                    setState(() {
-                      _pickedLocation = point;
-                    });
+                    setState(() => _pickedLocation = point);
                   }
                 },
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate:
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.example.tourist_guide',
                 ),
                 MarkerLayer(
                   markers: [
-                    // Marker المستخدم
                     Marker(
                       width: 60,
                       height: 60,
-                      point: LatLng(
-                          userLocation!.latitude, userLocation!.longitude),
-                      child: const Icon(Icons.person_pin_circle,
-                          size: 50, color: Colors.blue),
+                      point: LatLng(userLocation!.latitude,
+                          userLocation!.longitude),
+                      child: const Icon(
+                        Icons.person_pin_circle,
+                        size: 50,
+                        color: Colors.blue,
+                      ),
                     ),
-                   
-                    // Markers المعالم القريبة
                     ...nearbyMarkers,
                   ],
                 ),

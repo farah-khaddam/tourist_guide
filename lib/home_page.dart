@@ -6,8 +6,7 @@ import 'package:provider/provider.dart';
 import 'location_details_page.dart';
 import 'settings_page.dart';
 import 'map_screen.dart';
-import 'package:tourist_guide/admin_dashboard.dart';
-import 'EditLandmarkScreen.dart';
+import 'package:TRIPSY/admin_dashboard.dart';
 import 'theme_provider.dart';
 import 'bookmark.dart';
 
@@ -84,44 +83,43 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onItemTapped(int index) {
-  setState(() {
-    _selectedIndex = index;
-  });
+    setState(() {
+      _selectedIndex = index;
+    });
 
-  switch (index) {
-    case 0: // الرئيسية
-      setState(() {
-        selectedGovernorate = null;
-        selectedType = null;
-        searchQuery = '';
-      });
-      break;
-    case 1:
-      _showSearchDialog();
-      break;
-    case 2:
-      // أول ما يضغط على الخريطة، نظهر رسالة توضيحية 5 ثواني
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-           content: Text("يمكنك اختيار المسافة للمواقع القريبة من الاعلى"), 
+    switch (index) {
+      case 0: // الرئيسية
+        setState(() {
+          selectedGovernorate = null;
+          selectedType = null;
+          searchQuery = '';
+        });
+        break;
+      case 1:
+        _showSearchDialog();
+        break;
+      case 2:
+        // أول ما يضغط على الخريطة، نظهر رسالة توضيحية 5 ثواني
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("يمكنك اختيار المسافة للمواقع القريبة من الاعلى"),
 
-          duration: Duration(seconds: 5),
-        ),
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => MapScreen()),
-      );
-      break;
-    case 3:
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const SettingsPage()),
-      );
-      break;
+            duration: Duration(seconds: 5),
+          ),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MapScreen()),
+        );
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SettingsPage()),
+        );
+        break;
+    }
   }
-}
-
 
   void _showFilterChoiceDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
@@ -232,8 +230,9 @@ class _HomePageState extends State<HomePage> {
         title: Text("ابحث عن معلم", style: TextStyle(color: textColor)),
         content: Autocomplete<String>(
           optionsBuilder: (TextEditingValue textEditingValue) {
-            if (textEditingValue.text.isEmpty)
+            if (textEditingValue.text.isEmpty) {
               return const Iterable<String>.empty();
+            }
             return allLocations.where(
               (name) => name.toLowerCase().contains(
                 textEditingValue.text.toLowerCase(),
@@ -315,8 +314,9 @@ class _HomePageState extends State<HomePage> {
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, snapshot) {
               final user = snapshot.data;
-              if (user == null)
+              if (user == null) {
                 return const SizedBox(); // لا تظهر الأيقونة إذا لم يسجل الدخول
+              }
               return IconButton(
                 icon: const Icon(Icons.bookmark),
                 onPressed: () {
@@ -364,8 +364,9 @@ class _HomePageState extends State<HomePage> {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('location').snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
+          }
 
           final docs = snapshot.data!.docs;
           final locations = docs.where((doc) {
@@ -387,7 +388,7 @@ class _HomePageState extends State<HomePage> {
           return GridView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4, // 3 معالم بكل صف
+              crossAxisCount: 3, // 3 معالم بكل صف
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               childAspectRatio: 2 / 3,
@@ -396,7 +397,11 @@ class _HomePageState extends State<HomePage> {
             itemBuilder: (context, index) {
               final doc = locations[index];
               final data = doc.data() as Map<String, dynamic>;
-              final imageUrl = data['imageUrl'] ?? '';
+              final List<String> images = List<String>.from(
+                data['images'] ?? [],
+              );
+              final String firstImage = images.isNotEmpty ? images.first : '';
+
               final name = data['name'] ?? 'بدون اسم';
 
               return Card(
@@ -423,9 +428,9 @@ class _HomePageState extends State<HomePage> {
                         Expanded(
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
-                            child: imageUrl.isNotEmpty
+                            child: firstImage.isNotEmpty
                                 ? Image.network(
-                                    imageUrl,
+                                    firstImage,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
                                   )

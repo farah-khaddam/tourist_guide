@@ -11,7 +11,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 class LogOrSign extends StatefulWidget {
   final VoidCallback? redirectPage; // <-- أضفنا هذا
 
-  const LogOrSign({Key? key, this.redirectPage}) : super(key: key); // <-- عدّل الكونستركتور
+  const LogOrSign({super.key, this.redirectPage}); // <-- عدّل الكونستركتور
 
   @override
   _LogOrSignState createState() => _LogOrSignState();
@@ -238,7 +238,7 @@ Future<void> _loginWithGoogle() async {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => SignUpPage()),
+                      MaterialPageRoute(builder: (context) => const SignUpPage()),
                     );
                   },
                   

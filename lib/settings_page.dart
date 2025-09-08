@@ -38,7 +38,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => LogOrSign()),
+                  MaterialPageRoute(builder: (_) => const LogOrSign()),
                 ).then((_) {
                   setState(() {
                     currentUser = FirebaseAuth.instance.currentUser;

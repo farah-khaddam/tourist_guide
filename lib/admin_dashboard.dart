@@ -1,7 +1,6 @@
 // admin_dashboard.dart
 import 'package:flutter/material.dart';
-import 'package:tourist_guide/EditLandmarkScreen.dart';
-import 'package:tourist_guide/testscreen.dart';
+import 'package:TRIPSY/testscreen.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
 import 'AddEventScreen.dart';
@@ -15,7 +14,8 @@ class AdminDashboard extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final bgColor = themeProvider.isDark ? Colors.black : Colors.white;
     final textColor = themeProvider.isDark ? Colors.white : Colors.teal;
-    final buttonAddColor = Colors.teal;
+    const buttonAddColor = Colors.teal;
+
     final buttonEditColor = themeProvider.isDark
         ? Colors.grey.shade800
         : Colors.grey.shade700;
@@ -48,7 +48,7 @@ class AdminDashboard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.add_location),
-                label: Text(
+                label: const Text(
                   "إضافة موقع سياحي",
                   style: TextStyle(
                     fontSize: 18,
@@ -72,7 +72,7 @@ class AdminDashboard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.edit_location_alt),
-                label: Text(
+                label: const Text(
                   "تعديل / حذف موقع",
                   style: TextStyle(
                     fontSize: 18,

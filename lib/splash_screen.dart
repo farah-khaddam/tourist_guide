@@ -6,6 +6,8 @@ import 'home_page.dart';
 
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
@@ -34,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
     } else {
       // الانتقال مباشرة لصفحة HomePage بعد آخر سلايد
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => HomePage()),
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     }
   }
@@ -42,14 +44,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFF8C42),
+      backgroundColor: const Color(0xFFFF8C42),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // صورة مع تأثير تلاشي فقط
             AnimatedSwitcher(
-              duration: Duration(milliseconds: 800),
+              duration: const Duration(milliseconds: 800),
               transitionBuilder: (child, animation) {
                 return FadeTransition(
                   opacity: animation,
@@ -62,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 220,
               ),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
 
             // النص المتحرك
             Padding(
@@ -70,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen> {
               child: DefaultTextStyle(
                 style: GoogleFonts.cairo(
                   fontSize: 17,
-                  color: Color(0xFFF5DEB3),
+                  color: const Color(0xFFF5DEB3),
                   fontWeight: FontWeight.bold,
                   height: 1.5,
                 ),
@@ -81,7 +83,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   animatedTexts: [
                     TypewriterAnimatedText(
                       slides[_currentIndex]["text"]!,
-                      speed: Duration(milliseconds: 12),
+                      speed: const Duration(milliseconds: 12),
                     ),
                   ],
                 ),

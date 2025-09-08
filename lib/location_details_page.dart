@@ -5,8 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tourist_guide/Login.dart';
-import 'package:tourist_guide/EditLandmarkScreen.dart';
+import 'package:TRIPSY/Login.dart';
 
 class LocationDetailsPage extends StatefulWidget {
   final String locationId;
@@ -41,16 +40,16 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   // ألوان حسب الوضع
   Color get backgroundColor => Theme.of(context).brightness == Brightness.dark
       ? Colors.black
-      : Color(0xFFFFF5E1);
+      : const Color(0xFFFFF5E1);
   Color get cardColor => Theme.of(context).brightness == Brightness.dark
-      ? Color(0xFF2C2C2C)
+      ? const Color(0xFF2C2C2C)
       : Colors.white;
   Color get textColor => Theme.of(context).brightness == Brightness.dark
       ? Colors.white
       : Colors.black;
   Color get primaryColor => Theme.of(context).brightness == Brightness.dark
-      ? Color(0xFFB85C00)
-      : Color(0xFFFF9800);
+      ? const Color(0xFFB85C00)
+      : const Color(0xFFFF9800);
 
   Future<void> checkIfAdmin() async {
     if (userId == null) return;
@@ -239,8 +238,9 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                 icon: Icon(Icons.send, color: primaryColor),
                 onPressed: () {
                   final text = _commentController.text.trim();
-                  if (text.isNotEmpty)
+                  if (text.isNotEmpty) {
                     submitComment(text).then((_) => setState(() {}));
+                  }
                 },
               ),
           ],
@@ -274,7 +274,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         children: List.generate(
           5,
           (i) => IconButton(
-            icon: Icon(Icons.star_border, color: Colors.amber),
+            icon: const Icon(Icons.star_border, color: Colors.amber),
             onPressed: () => onStarPressed(i + 1),
           ),
         ),
@@ -362,6 +362,35 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                     : '';
 
                 return Card(
+                  color: cardColor,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            userName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            commentText,
+                            style: TextStyle(color: textColor),
+                            textAlign: TextAlign.right,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
   color: cardColor,
   margin: const EdgeInsets.symmetric(vertical: 4),
   child: Padding(
@@ -442,10 +471,12 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
           .doc(widget.locationId)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
-        if (!snapshot.data!.exists)
+        }
+        if (!snapshot.data!.exists) {
           return const Center(child: Text('لم يتم العثور على بيانات.'));
+        }
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final name = data['name'] ?? 'بدون اسم';
@@ -455,9 +486,9 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         final longitude = (data['longitude'] ?? 0.0).toDouble();
 
         List<String> images = [];
-        if (data['images'] != null)
+        if (data['images'] != null) {
           images = List<String>.from(data['images']);
-        else if (data['imageUrl'] != null &&
+        } else if (data['imageUrl'] != null &&
             data['imageUrl'].toString().isNotEmpty)
           images = [data['imageUrl']];
 
@@ -569,8 +600,9 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                   StreamBuilder<Map<String, dynamic>>(
                     stream: ratingStatsStream(),
                     builder: (context, snap) {
-                      if (!snap.hasData)
+                      if (!snap.hasData) {
                         return const CircularProgressIndicator();
+                      }
                       final avg = snap.data!['average'] as double;
                       final count = snap.data!['count'] as int;
                       return Card(
