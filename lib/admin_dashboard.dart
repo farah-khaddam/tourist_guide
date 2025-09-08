@@ -1,4 +1,3 @@
-// admin_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:TRIPSY/testscreen.dart';
 import 'package:provider/provider.dart';
@@ -12,23 +11,14 @@ class AdminDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final bgColor = themeProvider.isDark ? Colors.black : Colors.white;
-    final textColor = themeProvider.isDark ? Colors.white : Colors.teal;
-    const buttonAddColor = Colors.teal;
-
-    final buttonEditColor = themeProvider.isDark
-        ? Colors.grey.shade800
-        : Colors.grey.shade700;
+    final theme = Theme.of(context);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: bgColor,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
           title: const Text("لوحة تحكم الأدمن"),
-          backgroundColor: buttonAddColor,
-          foregroundColor: Colors.white,
         ),
         body: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -37,8 +27,11 @@ class AdminDashboard extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonAddColor,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -49,20 +42,16 @@ class AdminDashboard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.add_location),
-                label: const Text(
-                  "إضافة موقع سياحي",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                label: const Text("إضافة موقع سياحي"),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonEditColor,
+                  backgroundColor: theme.colorScheme.secondary,
+                  foregroundColor: theme.colorScheme.onSecondary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -73,20 +62,16 @@ class AdminDashboard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.edit_location_alt),
-                label: const Text(
-                  "تعديل / حذف موقع",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                label: const Text("تعديل / حذف موقع"),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -97,20 +82,16 @@ class AdminDashboard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.event),
-                label: Text(
-                  "إضافة فعالية",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                label: const Text("إضافة فعالية"),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonEditColor,
+                  backgroundColor: theme.colorScheme.secondary,
+                  foregroundColor: theme.colorScheme.onSecondary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -121,16 +102,8 @@ class AdminDashboard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.event_available),
-                label: Text(
-                  "تعديل / حذف الفعاليات",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                label: const Text("تعديل / حذف الفعاليات"),
               ),
-              const SizedBox(height: 20),
             ],
           ),
         ),

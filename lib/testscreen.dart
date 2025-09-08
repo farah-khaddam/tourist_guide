@@ -46,6 +46,21 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
   final List<String> _types = ["ديني", "ثقافي", "تاريخي", "طبيعي", "ترفيهي"];
 
   @override
+Color get fieldFillColor => Theme.of(context).brightness == Brightness.dark
+    ? Colors.grey.shade800 // إذا الوضع داكن
+    : Colors.white;        // إذا الوضع فاتح
+
+Color get fieldTextColor => Theme.of(context).brightness == Brightness.dark
+    ? Colors.white
+    : Colors.black;
+
+Color get buttonColor => Theme.of(context).brightness == Brightness.dark
+    ? Colors.orange.shade700
+    : Colors.teal;
+
+Color get buttonTextColor => Colors.white; // نصوص الأزرار
+
+
   void initState() {
     super.initState();
 
@@ -188,14 +203,14 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
                   padding: const EdgeInsets.only(bottom: 16),
                   child: TextFormField(
                     controller: _nameController,
-                    decoration: InputDecoration(
+                      style: TextStyle(color: fieldTextColor), // لون النص
+                      decoration: InputDecoration(
+                        fillColor: fieldFillColor,             // خلفية الحقل
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(color: buttonColor), // لون الحدود
+                        ),
                       labelText: 'اسم المعلم',
                       filled: true,
-                      fillColor: fillColor,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: primaryColor),
-                      ),
                     ),
                     validator: (value) =>
                         value!.isEmpty ? 'لا يمكن أن يكون الحقل فارغ' : null,
@@ -362,14 +377,8 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
                 _isLoading
                     ? CircularProgressIndicator(color: primaryColor)
                     : ElevatedButton(
-                        onPressed: _addLandmark,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                        onPressed: _addLandmark,      
+                        style: ElevatedButton.styleFrom(backgroundColor: buttonColor),
                         child: Text(isEdit ? 'تعديل المعلم' : 'إضافة المعلم',
                             style: const TextStyle(color: Colors.white)),
                       ),
