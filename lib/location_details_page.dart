@@ -186,14 +186,13 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     final userName = userData?['name'] ?? 'مستخدم مجهول';
 
     await FirebaseFirestore.instance
-        .collection('location')
-        .doc(widget.locationId)
-        .collection('comments')
+        .collection('comment')
         .add({
           'userId': user.uid,
-          'userName': userName, // 👈 إضافة الاسم
-          'comment': text,
-          'timestamp': Timestamp.now(),
+          'username': userName, // 👈 إضافة الاسم
+          'locationId': widget.locationId,
+          'text': text,
+          'createdAt': Timestamp.now(),
         });
 
     _commentController.clear();
@@ -326,14 +325,15 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   Widget _buildCommentsList() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('location')
-          .doc(widget.locationId)
-          .collection('comments')
-          .orderBy('timestamp', descending: true)
+          .collection('comment')
+          .where('locationId', isEqualTo: widget.locationId)
+          .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const CircularProgressIndicator();
         final comments = snapshot.data!.docs;
+        final userIds = comments.map((c) => c['userId']).toSet().toList();
+
         bool showAll = false; // يتحكم إذا اضغط المستخدم عرض المزيد
         int displayCount = comments.length > 2 ? 2 : comments.length;
 
@@ -354,8 +354,12 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                 doc,
               ) {
                 final data = doc.data() as Map<String, dynamic>;
-                final commentText = data['comment'] ?? '';
-                final userName = data['userName'] ?? 'مستخدم مجهول';
+                final commentText = data['text'] ?? '';
+                final userName = data['username'] ?? 'مستخدم مجهول';
+                final timestamp = data['createdAt'] as Timestamp?;
+                final timeString = timestamp != null
+                    ? "${timestamp.toDate().day}/${timestamp.toDate().month}/${timestamp.toDate().year}"
+                    : '';
 
                 return Card(
                   color: cardColor,
@@ -387,6 +391,60 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                   ),
                 );
               }),
+  color: cardColor,
+  margin: const EdgeInsets.symmetric(vertical: 4),
+  child: Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                userName,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+                textAlign: TextAlign.right,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                timeString,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.right,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                commentText,
+                style: TextStyle(color: textColor),
+                textAlign: TextAlign.right,
+              ),
+            ],
+          ),
+        ),
+        if (userId == data['userId'] || isAdmin)
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.red, size: 20),
+            onPressed: () async {
+              await FirebaseFirestore.instance
+                  .collection('comment')
+                  .doc(doc.id)
+                  .delete();
+              setState(() {});
+            },
+          ),
+      ],
+    ),
+  ),
+);
+
+              }).toList(),
               if (comments.length > 2)
                 TextButton(
                   onPressed: () {
