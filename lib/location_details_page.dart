@@ -546,6 +546,26 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Text(
+                                  'تصنيف الموقع: ',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: textColor,
+                                  ),
+                                ),
+                                Text(
+                                  data['type'] ?? 'غير محدد',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: textColor,
+                                  ),
+                                ),
+                              ],
+                            ),
                           const SizedBox(height: 12),
                           Text(
                             'الوصف:',
@@ -560,10 +580,27 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                             description,
                             style: TextStyle(fontSize: 16, color: textColor),
                           ),
+                          const SizedBox(height: 12),
+                      Text(
+                        'طبيعة الطريق:',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        data['terrain'] ?? 'غير محددة',
+                        style: TextStyle(fontSize: 16, color: textColor),
+                      ),
                         ],
+                        
                       ),
                     ),
                   ),
+                  
+
                   const SizedBox(height: 16),
                   StreamBuilder<Map<String, dynamic>>(
                     stream: ratingStatsStream(),
