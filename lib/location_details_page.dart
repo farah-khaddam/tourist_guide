@@ -5,7 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:TRIPSY/Login.dart';
+import 'Login.dart';
+import 'bookmark.dart';
 
 class LocationDetailsPage extends StatefulWidget {
   final String locationId;
@@ -323,145 +324,112 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   }
 
   Widget _buildCommentsList() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('comment')
-          .where('locationId', isEqualTo: widget.locationId)
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const CircularProgressIndicator();
-        final comments = snapshot.data!.docs;
-        final userIds = comments.map((c) => c['userId']).toSet().toList();
+  return StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection('comment')
+        .where('locationId', isEqualTo: widget.locationId)
+        .orderBy('createdAt', descending: true)
+        .snapshots(),
+    builder: (context, snapshot) {
+      if (!snapshot.hasData) return const CircularProgressIndicator();
+      final comments = snapshot.data!.docs;
 
-        bool showAll = false; // يتحكم إذا اضغط المستخدم عرض المزيد
-        int displayCount = comments.length > 2 ? 2 : comments.length;
+      bool showAll = false; // للتحكم في عرض المزيد
+      int displayCount = comments.length > 2 ? 2 : comments.length;
 
-        return StatefulBuilder(
-          builder: (context, setStateSB) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'التعليقات (${comments.length})',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
+      return StatefulBuilder(
+        builder: (context, setStateSB) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'التعليقات (${comments.length})',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
               ),
-              const SizedBox(height: 8),
-              ...comments.take(showAll ? comments.length : displayCount).map((
-                doc,
-              ) {
-                final data = doc.data() as Map<String, dynamic>;
-                final commentText = data['text'] ?? '';
-                final userName = data['username'] ?? 'مستخدم مجهول';
-                final timestamp = data['createdAt'] as Timestamp?;
-                final timeString = timestamp != null
-                    ? "${timestamp.toDate().day}/${timestamp.toDate().month}/${timestamp.toDate().year}"
-                    : '';
+            ),
+            const SizedBox(height: 8),
+            ...comments.take(showAll ? comments.length : displayCount).map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final commentText = data['text'] ?? '';
+              final userName = data['username'] ?? 'مستخدم مجهول';
+              final timestamp = data['createdAt'] as Timestamp?;
+              final timeString = timestamp != null
+                  ? "${timestamp.toDate().day}/${timestamp.toDate().month}/${timestamp.toDate().year}"
+                  : '';
 
-                return Card(
-                  color: cardColor,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            userName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: primaryColor,
+              return Card(
+                color: cardColor,
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              userName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
+                              textAlign: TextAlign.right,
                             ),
-                            textAlign: TextAlign.right,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            commentText,
-                            style: TextStyle(color: textColor),
-                            textAlign: TextAlign.right,
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            Text(
+                              timeString,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              commentText,
+                              style: TextStyle(color: textColor),
+                              textAlign: TextAlign.right,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      if (userId == data['userId'] || isAdmin)
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                          onPressed: () async {
+                            await FirebaseFirestore.instance
+                                .collection('comment')
+                                .doc(doc.id)
+                                .delete();
+                            setState(() {});
+                          },
+                        ),
+                    ],
                   ),
-                );
-              }),
-  color: cardColor,
-  margin: const EdgeInsets.symmetric(vertical: 4),
-  child: Padding(
-    padding: const EdgeInsets.all(8.0),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                userName,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
                 ),
-                textAlign: TextAlign.right,
+              );
+            }).toList(),
+            if (comments.length > 2)
+              TextButton(
+                onPressed: () {
+                  setStateSB(() {
+                    showAll = !showAll;
+                  });
+                },
+                child: Text(showAll ? "عرض أقل" : "عرض المزيد"),
               ),
-              const SizedBox(height: 2),
-              Text(
-                timeString,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
-                textAlign: TextAlign.right,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                commentText,
-                style: TextStyle(color: textColor),
-                textAlign: TextAlign.right,
-              ),
-            ],
-          ),
+            const SizedBox(height: 8),
+            _buildCommentBox(), // مربع إضافة تعليق
+          ],
         ),
-        if (userId == data['userId'] || isAdmin)
-          IconButton(
-            icon: Icon(Icons.delete, color: Colors.red, size: 20),
-            onPressed: () async {
-              await FirebaseFirestore.instance
-                  .collection('comment')
-                  .doc(doc.id)
-                  .delete();
-              setState(() {});
-            },
-          ),
-      ],
-    ),
-  ),
-);
-
-              }).toList(),
-              if (comments.length > 2)
-                TextButton(
-                  onPressed: () {
-                    setStateSB(() {
-                      showAll = !showAll;
-                    });
-                  },
-                  child: Text(showAll ? "عرض أقل" : "عرض المزيد"),
-                ),
-              const SizedBox(height: 8),
-              _buildCommentBox(), // ⬅ مربع إضافة تعليق يكون بعد التعليقات
-            ],
-          ),
-        );
-      },
-    );
-  }
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {

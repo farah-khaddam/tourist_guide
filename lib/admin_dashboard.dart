@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'theme_provider.dart';
 import 'AddEventScreen.dart';
 import 'ManageEventsScreen.dart';
+import 'EditLandmarkScreen.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
