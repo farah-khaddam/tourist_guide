@@ -21,7 +21,7 @@ class AppTheme {
       secondary: beigeLight,
       brightness: Brightness.light,
     ),
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: orangeLight,
       foregroundColor: Colors.white,
       elevation: 0,
@@ -37,29 +37,29 @@ class AppTheme {
       fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: orangeLight),
+        borderSide: const BorderSide(color: orangeLight),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: orangeLight, width: 2),
+        borderSide: const BorderSide(color: orangeLight, width: 2),
       ),
-      labelStyle: TextStyle(color: Colors.black87),
+      labelStyle: const TextStyle(color: Colors.black87),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: orangeLight,
         foregroundColor: Colors.white,
-        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: orangeLight,
-        textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
       ),
     ),
   );
@@ -74,7 +74,7 @@ class AppTheme {
       secondary: greyDark,
       brightness: Brightness.dark,
     ),
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: blackDark,
       foregroundColor: orangeDark,
       elevation: 0,
@@ -90,29 +90,29 @@ class AppTheme {
       fillColor: greyDark,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: orangeDark),
+        borderSide: const BorderSide(color: orangeDark),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: orangeDark, width: 2),
+        borderSide: const BorderSide(color: orangeDark, width: 2),
       ),
-      labelStyle: TextStyle(color: Colors.white70),
+      labelStyle: const TextStyle(color: Colors.white70),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: orangeDark,
         foregroundColor: Colors.white,
-        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: orangeDark,
-        textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
       ),
     ),
   );

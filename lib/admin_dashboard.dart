@@ -1,6 +1,6 @@
 // admin_dashboard.dart
 import 'package:flutter/material.dart';
-import 'package:tourist_guide/testscreen.dart';
+import 'package:TRIPSY/testscreen.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
 
@@ -12,8 +12,10 @@ class AdminDashboard extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final bgColor = themeProvider.isDark ? Colors.black : Colors.white;
     final textColor = themeProvider.isDark ? Colors.white : Colors.teal;
-    final buttonAddColor = Colors.teal;
-    final buttonEditColor = themeProvider.isDark ? Colors.grey.shade800 : Colors.grey.shade700;
+    const buttonAddColor = Colors.teal;
+    final buttonEditColor = themeProvider.isDark
+        ? Colors.grey.shade800
+        : Colors.grey.shade700;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -38,14 +40,18 @@ class AdminDashboard extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const AddLandmarkScreen()),
+                      builder: (context) => const AddLandmarkScreen(),
+                    ),
                   );
                 },
                 icon: const Icon(Icons.add_location),
-                label: Text(
+                label: const Text(
                   "إضافة موقع سياحي",
                   style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -58,10 +64,13 @@ class AdminDashboard extends StatelessWidget {
                   // لاحقاً: تعديل أو حذف مواقع سياحية
                 },
                 icon: const Icon(Icons.edit_location_alt),
-                label: Text(
+                label: const Text(
                   "تعديل / حذف موقع",
                   style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],

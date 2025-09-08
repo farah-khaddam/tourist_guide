@@ -8,7 +8,7 @@ import 'theme_provider.dart';
 class LogOrSign extends StatefulWidget {
   final VoidCallback? redirectPage; // <-- أضفنا هذا
 
-  const LogOrSign({Key? key, this.redirectPage}) : super(key: key); // <-- عدّل الكونستركتور
+  const LogOrSign({super.key, this.redirectPage}); // <-- عدّل الكونستركتور
 
   @override
   _LogOrSignState createState() => _LogOrSignState();
@@ -164,7 +164,7 @@ class _LogOrSignState extends State<LogOrSign> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => SignUpPage()),
+                      MaterialPageRoute(builder: (context) => const SignUpPage()),
                     );
                   },
                   child: Text(
