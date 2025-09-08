@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:tourist_guide/testscreen.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
+import 'AddEventScreen.dart';
+import 'ManageEventsScreen.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -13,7 +15,9 @@ class AdminDashboard extends StatelessWidget {
     final bgColor = themeProvider.isDark ? Colors.black : Colors.white;
     final textColor = themeProvider.isDark ? Colors.white : Colors.teal;
     final buttonAddColor = Colors.teal;
-    final buttonEditColor = themeProvider.isDark ? Colors.grey.shade800 : Colors.grey.shade700;
+    final buttonEditColor = themeProvider.isDark
+        ? Colors.grey.shade800
+        : Colors.grey.shade700;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -38,14 +42,18 @@ class AdminDashboard extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const AddLandmarkScreen()),
+                      builder: (context) => const AddLandmarkScreen(),
+                    ),
                   );
                 },
                 icon: const Icon(Icons.add_location),
                 label: Text(
                   "إضافة موقع سياحي",
                   style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -61,9 +69,61 @@ class AdminDashboard extends StatelessWidget {
                 label: Text(
                   "تعديل / حذف موقع",
                   style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddEventScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.event),
+                label: Text(
+                  "إضافة فعالية",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: buttonEditColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ManageEventsScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.event_available),
+                label: Text(
+                  "تعديل / حذف الفعاليات",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

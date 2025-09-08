@@ -330,17 +330,34 @@ class _HomePageState extends State<HomePage> {
             },
           ),
 
-          if (isAdmin)
-            IconButton(
-              icon: const Icon(Icons.admin_panel_settings),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminDashboard()),
-                );
-              },
-              color: Colors.white,
-            ),
+          StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              final user = snapshot.data;
+              if (user == null) return const SizedBox();
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance.collection('user').doc(user.uid).get(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const SizedBox();
+                  final data = snapshot.data!.data() as Map<String, dynamic>?;
+                  if (data != null && data['isAdmin'] == true) {
+                    return IconButton(
+                      icon: const Icon(Icons.admin_panel_settings),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AdminDashboard()),
+                        );
+                      },
+                      color: Colors.white,
+                    );
+                  }
+                  return const SizedBox();
+                },
+              );
+            },
+          ),
+
         ],
       ),
 
