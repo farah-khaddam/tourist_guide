@@ -362,43 +362,59 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                     : '';
 
                 return Card(
-                  color: cardColor,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            userName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: primaryColor,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            timeString,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            commentText,
-                            style: TextStyle(color: textColor),
-                            textAlign: TextAlign.right,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
+  color: cardColor,
+  margin: const EdgeInsets.symmetric(vertical: 4),
+  child: Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                userName,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+                textAlign: TextAlign.right,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                timeString,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.right,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                commentText,
+                style: TextStyle(color: textColor),
+                textAlign: TextAlign.right,
+              ),
+            ],
+          ),
+        ),
+        if (userId == data['userId'] || isAdmin)
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.red, size: 20),
+            onPressed: () async {
+              await FirebaseFirestore.instance
+                  .collection('comment')
+                  .doc(doc.id)
+                  .delete();
+              setState(() {});
+            },
+          ),
+      ],
+    ),
+  ),
+);
+
               }).toList(),
               if (comments.length > 2)
                 TextButton(
