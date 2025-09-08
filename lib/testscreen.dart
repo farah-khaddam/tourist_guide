@@ -1,4 +1,3 @@
-// testscreen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,16 +16,34 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
 
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _typeController = TextEditingController();
   final _latController = TextEditingController();
   final _lngController = TextEditingController();
   final _terrainController = TextEditingController();
-  final _tripsController = TextEditingController();
+
+  String? _selectedGovernorate;
+  String? _selectedType;
 
   List<TextEditingController> _imageControllers = [];
-
   bool _isLoading = false;
+
+  final List<String> _governorates = [
+    "دمشق",
+    "ريف دمشق",
+    "درعا",
+    "السويداء",
+    "القنيطرة",
+    "حمص",
+    "حماة",
+    "اللاذقية",
+    "طرطوس",
+    "ادلب",
+    "الرقة",
+    "الحسكة",
+    "دير الزور",
+    "حلب"
+  ];
+
+  final List<String> _types = ["ديني", "ثقافي", "تاريخي", "طبيعي", "ترفيهي"];
 
   @override
   void initState() {
@@ -34,15 +51,14 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
 
     if (widget.landmarkData != null) {
       final data = widget.landmarkData!.data() as Map<String, dynamic>;
-
       _nameController.text = data['name'] ?? '';
       _descriptionController.text = data['description'] ?? '';
-      _cityController.text = data['governorate'] ?? '';
-      _typeController.text = data['type'] ?? '';
+      _terrainController.text = data['terrain'] ?? '';
       _latController.text = (data['latitude'] ?? '').toString();
       _lngController.text = (data['longitude'] ?? '').toString();
-      _terrainController.text = data['terrain'] ?? '';
-      _tripsController.text = data['trips'] ?? '';
+
+      _selectedGovernorate = data['governorate'];
+      _selectedType = data['type'];
 
       final images = List<String>.from(data['images'] ?? []);
       if (images.isNotEmpty) {
@@ -60,12 +76,9 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _cityController.dispose();
-    _typeController.dispose();
+    _terrainController.dispose();
     _latController.dispose();
     _lngController.dispose();
-    _terrainController.dispose();
-    _tripsController.dispose();
     for (var controller in _imageControllers) {
       controller.dispose();
     }
@@ -88,6 +101,13 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
 
   Future<void> _addLandmark() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedGovernorate == null || _selectedType == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('اختر المحافظة والنوع')),
+        );
+        return;
+      }
+
       setState(() {
         _isLoading = true;
       });
@@ -103,13 +123,12 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
         final data = {
           'name': _nameController.text.trim(),
           'description': _descriptionController.text.trim(),
-          'governorate': _cityController.text.trim(),
-          'type': _typeController.text.trim(),
+          'governorate': _selectedGovernorate,
+          'type': _selectedType,
           'images': imageUrls,
           'latitude': double.tryParse(_latController.text) ?? 0.0,
           'longitude': double.tryParse(_lngController.text) ?? 0.0,
           'terrain': _terrainController.text.trim(),
-          'trips': _tripsController.text.trim(),
           'createdAt': Timestamp.now(),
           'createdBy': user?.uid ?? 'admin',
         };
@@ -129,6 +148,8 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
         _formKey.currentState!.reset();
         setState(() {
           _imageControllers = [TextEditingController()];
+          _selectedGovernorate = null;
+          _selectedType = null;
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -147,12 +168,14 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
     final theme = Theme.of(context);
     final primaryColor = theme.primaryColor;
     final fillColor = theme.inputDecorationTheme.fillColor ?? Colors.white;
-
     final isEdit = widget.landmarkData != null;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(title: Text(isEdit ? 'تعديل معلم' : 'إضافة معلم جديد'), backgroundColor: primaryColor),
+      appBar: AppBar(
+        title: Text(isEdit ? 'تعديل معلم' : 'إضافة معلم جديد'),
+        backgroundColor: primaryColor,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -160,41 +183,120 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                ...[
-                  _nameController,
-                  _descriptionController,
-                  _cityController,
-                  _typeController,
-                  _terrainController,
-                  _tripsController
-                ].map((controller) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: TextFormField(
-                        controller: controller,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: fillColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: primaryColor),
-                          ),
-                        ),
-                        validator: (value) =>
-                            value!.isEmpty ? 'لا يمكن أن يكون الحقل فارغ' : null,
+                // اسم المعلم
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'اسم المعلم',
+                      filled: true,
+                      fillColor: fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: primaryColor),
                       ),
-                    )),
+                    ),
+                    validator: (value) =>
+                        value!.isEmpty ? 'لا يمكن أن يكون الحقل فارغ' : null,
+                  ),
+                ),
+                // الوصف
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      labelText: 'الوصف',
+                      filled: true,
+                      fillColor: fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: primaryColor),
+                      ),
+                    ),
+                    validator: (value) =>
+                        value!.isEmpty ? 'لا يمكن أن يكون الحقل فارغ' : null,
+                  ),
+                ),
+                // المحافظة Dropdown
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedGovernorate,
+                    decoration: InputDecoration(
+                      labelText: 'المحافظة',
+                      filled: true,
+                      fillColor: fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: primaryColor),
+                      ),
+                    ),
+                    items: _governorates
+                        .map((gov) => DropdownMenuItem(
+                              value: gov,
+                              child: Text(gov),
+                            ))
+                        .toList(),
+                    onChanged: (val) => setState(() => _selectedGovernorate = val),
+                    validator: (value) =>
+                        value == null ? 'اختر المحافظة' : null,
+                  ),
+                ),
+                // النوع / التصنيف Dropdown
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedType,
+                    decoration: InputDecoration(
+                      labelText: 'التصنيف',
+                      filled: true,
+                      fillColor: fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: primaryColor),
+                      ),
+                    ),
+                    items: _types
+                        .map((type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(type),
+                            ))
+                        .toList(),
+                    onChanged: (val) => setState(() => _selectedType = val),
+                    validator: (value) => value == null ? 'اختر التصنيف' : null,
+                  ),
+                ),
+                // الطبيعة / البيئة
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: TextFormField(
+                    controller: _terrainController,
+                    decoration: InputDecoration(
+                      labelText: 'الطبيعة/البيئة',
+                      filled: true,
+                      fillColor: fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: primaryColor),
+                      ),
+                    ),
+                  ),
+                ),
+                // الإحداثيات
                 Row(
                   children: [
                     Expanded(
                       child: TextFormField(
                         controller: _latController,
                         decoration: InputDecoration(
+                          labelText: 'خط العرض (Latitude)',
                           filled: true,
                           fillColor: fillColor,
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(color: primaryColor)),
-                          labelText: 'Latitude',
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) =>
@@ -206,12 +308,12 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
                       child: TextFormField(
                         controller: _lngController,
                         decoration: InputDecoration(
+                          labelText: 'خط الطول (Longitude)',
                           filled: true,
                           fillColor: fillColor,
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(color: primaryColor)),
-                          labelText: 'Longitude',
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) =>
@@ -221,8 +323,8 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('روابط الصور:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                // روابط الصور
+                const Text('روابط الصور:', style: TextStyle(fontWeight: FontWeight.bold)),
                 ..._imageControllers.asMap().entries.map((entry) {
                   final index = entry.key;
                   final controller = entry.value;
@@ -232,12 +334,12 @@ class _AddLandmarkScreenState extends State<AddLandmarkScreen> {
                         child: TextFormField(
                           controller: controller,
                           decoration: InputDecoration(
+                            labelText: 'رابط صورة ${index + 1}',
                             filled: true,
                             fillColor: fillColor,
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(color: primaryColor)),
-                            labelText: 'رابط صورة ${index + 1}',
                           ),
                           validator: (value) =>
                               value!.isEmpty ? 'أدخل رابط الصورة' : null,

@@ -1,5 +1,6 @@
 // admin_dashboard.dart
 import 'package:flutter/material.dart';
+import 'package:tourist_guide/EditLandmarkScreen.dart';
 import 'package:tourist_guide/testscreen.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
@@ -63,7 +64,12 @@ class AdminDashboard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 onPressed: () {
-                  // لاحقاً: تعديل أو حذف مواقع سياحية
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EditLandmarksScreen(),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.edit_location_alt),
                 label: Text(

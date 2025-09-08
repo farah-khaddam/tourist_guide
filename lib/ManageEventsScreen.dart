@@ -55,15 +55,28 @@ class ManageEventsScreen extends StatelessWidget {
                 final doc = events[index];
                 final data = doc.data() as Map<String, dynamic>;
                 final name = data['name'] ?? "بدون اسم";
-                final startDate = (data['startDate'] as Timestamp).toDate();
-                final endDate = (data['endDate'] as Timestamp).toDate();
+
+                // التواريخ مع التحقق من null
+                final startDate = data['startDate'] != null
+                    ? (data['startDate'] as Timestamp).toDate()
+                    : null;
+                final endDate = data['endDate'] != null
+                    ? (data['endDate'] as Timestamp).toDate()
+                    : null;
+
+                String dateText;
+                if (startDate != null && endDate != null) {
+                  dateText =
+                      "من: ${startDate.toLocal().toString().split(' ')[0]} إلى: ${endDate.toLocal().toString().split(' ')[0]}";
+                } else {
+                  dateText = "التاريخ غير محدد";
+                }
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
                     title: Text(name),
-                    subtitle: Text(
-                        "من: ${startDate.toLocal().toString().split(' ')[0]} إلى: ${endDate.toLocal().toString().split(' ')[0]}"),
+                    subtitle: Text(dateText),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
