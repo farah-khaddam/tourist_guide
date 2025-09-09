@@ -19,15 +19,23 @@ class EventsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final bgColor = themeProvider.isDark ? Colors.black : themeProvider.beigeLight;
-    final cardColor = themeProvider.isDark ? Colors.grey.shade900 : Colors.white;
-    final textColor = themeProvider.isDark ? Colors.white : Colors.orange.shade700;
+    final bgColor = themeProvider.isDark
+        ? Colors.black
+        : themeProvider.beigeLight;
+    final cardColor = themeProvider.isDark
+        ? Colors.grey.shade900
+        : Colors.white;
+    final textColor = themeProvider.isDark
+        ? Colors.white
+        : Colors.orange.shade700;
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
         title: const Text("الفعاليات"),
-        backgroundColor: themeProvider.isDark ? themeProvider.orangeDark : themeProvider.orangeLight,
+        backgroundColor: themeProvider.isDark
+            ? themeProvider.orangeDark
+            : themeProvider.orangeLight,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -35,12 +43,16 @@ class EventsPage extends StatelessWidget {
             .orderBy('startDate', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData)
+            return const Center(child: CircularProgressIndicator());
 
           final docs = snapshot.data!.docs;
           if (docs.isEmpty) {
             return Center(
-              child: Text("لا توجد فعاليات حالياً", style: TextStyle(color: textColor)),
+              child: Text(
+                "لا توجد فعاليات حالياً",
+                style: TextStyle(color: textColor),
+              ),
             );
           }
 
@@ -63,7 +75,7 @@ class EventsPage extends StatelessWidget {
               final String imageUrl = data['imageUrl'] ?? '';
               final now = DateTime.now();
               bool isEnded = endDate != null && endDate.isBefore(now);
-              
+
               return InkWell(
                 onTap: () {
                   Navigator.push(
@@ -84,12 +96,22 @@ class EventsPage extends StatelessWidget {
                       // صورة الفعالية
                       Expanded(
                         child: ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
                           child: imageUrl.isNotEmpty
-                              ? Image.network(imageUrl, width: double.infinity, fit: BoxFit.cover)
+                              ? Image.network(
+                                  imageUrl,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                )
                               : Container(
                                   color: Colors.grey,
-                                  child: Icon(Icons.event, size: 50, color: Colors.white),
+                                  child: Icon(
+                                    Icons.event,
+                                    size: 50,
+                                    color: Colors.white,
+                                  ),
                                 ),
                         ),
                       ),
@@ -120,14 +142,21 @@ class EventsPage extends StatelessWidget {
                             if (isEnded)
                               Container(
                                 margin: const EdgeInsets.only(top: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.red.shade400,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(
                                   "انتهت الفعالية",
-                                  style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                           ],
