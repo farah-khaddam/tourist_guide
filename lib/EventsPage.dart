@@ -60,11 +60,10 @@ class EventsPage extends StatelessWidget {
               final Timestamp? endTimestamp = data['endDate'];
               final DateTime? startDate = startTimestamp?.toDate();
               final DateTime? endDate = endTimestamp?.toDate();
-              final List<String> images = List<String>.from(data['images'] ?? []);
+              final String imageUrl = data['imageUrl'] ?? '';
               final now = DateTime.now();
               bool isEnded = endDate != null && endDate.isBefore(now);
-              final String imageUrl = images.isNotEmpty ? images.first : '';
-
+              
               return InkWell(
                 onTap: () {
                   Navigator.push(

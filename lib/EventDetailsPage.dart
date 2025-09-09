@@ -42,7 +42,7 @@ class EventDetailsPage extends StatelessWidget {
             final String contactNumber = data['contactNumber'] ?? '';
             final Timestamp? startTimestamp = data['startDate'];
             final Timestamp? endTimestamp = data['endDate'];
-            final List<String> images = List<String>.from(data['images'] ?? []);
+            final String imageUrl = data['imageUrl'] ?? '';
             final List<dynamic> locationIds = data['locationIds'] ?? [];
 
             final DateTime? startDate = startTimestamp?.toDate();
@@ -56,28 +56,28 @@ class EventDetailsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // صور الفعالية
-                  if (images.isNotEmpty)
-                    SizedBox(
-                      height: 200,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: images.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                images[index],
-                                width: 300,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  const SizedBox(height: 12),
+                  // صورة الفعالية الرئيسية
+                      if (imageUrl.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            imageUrl,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 200,
+                                color: Colors.grey,
+                                child: const Center(
+                                  child: Icon(Icons.broken_image, color: Colors.white, size: 40),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
                   // بطاقة اسم الفعالية
                   Card(
                     color: cardColor,

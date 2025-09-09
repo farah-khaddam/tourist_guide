@@ -16,6 +16,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   DateTime? startDate;
   DateTime? endDate;
   String contactNumber = '';
+  String imageUrl = ''; // 🔹 متغير لرابط الصورة
   List<String> selectedLocations = [];
 
   List<QueryDocumentSnapshot> allLocations = [];
@@ -29,7 +30,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   Future<void> fetchLocations() async {
-    final snapshot = await FirebaseFirestore.instance.collection('location').get();
+    final snapshot =
+        await FirebaseFirestore.instance.collection('location').get();
     setState(() {
       allLocations = snapshot.docs;
       filteredLocations = allLocations;
@@ -37,13 +39,16 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   Future<void> _addEvent() async {
-    if (_formKey.currentState!.validate() && startDate != null && endDate != null) {
+    if (_formKey.currentState!.validate() &&
+        startDate != null &&
+        endDate != null) {
       await FirebaseFirestore.instance.collection('event').add({
         'name': name,
         'description': description,
         'startDate': Timestamp.fromDate(startDate!),
         'endDate': Timestamp.fromDate(endDate!),
         'contactNumber': contactNumber,
+        'imageUrl': imageUrl, // 🔹 تخزين رابط الصورة
         'locationIds': selectedLocations,
       });
 
@@ -53,7 +58,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("الرجاء ملء جميع الحقول واختيار التواريخ.")),
+        const SnackBar(
+            content: Text("الرجاء ملء جميع الحقول واختيار التواريخ.")),
       );
     }
   }
@@ -95,15 +101,26 @@ class _AddEventScreenState extends State<AddEventScreen> {
               children: [
                 TextFormField(
                   decoration: const InputDecoration(labelText: "اسم الفعالية"),
-                  validator: (val) => val == null || val.isEmpty ? "مطلوب" : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? "مطلوب" : null,
                   onChanged: (val) => name = val,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   decoration: const InputDecoration(labelText: "الوصف"),
-                  validator: (val) => val == null || val.isEmpty ? "مطلوب" : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? "مطلوب" : null,
                   onChanged: (val) => description = val,
                   maxLines: 3,
+                ),
+                const SizedBox(height: 10),
+                // 🔹 حقل رابط الصورة
+                TextFormField(
+                  decoration: const InputDecoration(labelText: "رابط الصورة"),
+                  validator: (val) =>
+                      val == null || val.isEmpty ? "مطلوب" : null,
+                  onChanged: (val) => imageUrl = val,
+                  keyboardType: TextInputType.url,
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -113,7 +130,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         onPressed: _pickStartDate,
                         child: Text(startDate == null
                             ? "تاريخ البداية"
-                            : startDate!.toLocal().toString().split(' ')[0]),
+                            : startDate!
+                                .toLocal()
+                                .toString()
+                                .split(' ')[0]),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -130,7 +150,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 const SizedBox(height: 10),
                 TextFormField(
                   decoration: const InputDecoration(labelText: "رقم للتواصل"),
-                  validator: (val) => val == null || val.isEmpty ? "مطلوب" : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? "مطلوب" : null,
                   onChanged: (val) => contactNumber = val,
                   keyboardType: TextInputType.phone,
                 ),
@@ -146,14 +167,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   onChanged: (val) {
                     setState(() {
                       locationSearch = val;
-                      filteredLocations = allLocations
-                          .where((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
-                            return (data['name'] ?? '')
-                                .toLowerCase()
-                                .contains(val.toLowerCase());
-                          })
-                          .toList();
+                      filteredLocations = allLocations.where((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return (data['name'] ?? '')
+                            .toLowerCase()
+                            .contains(val.toLowerCase());
+                      }).toList();
                     });
                   },
                 ),
@@ -161,7 +180,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 SizedBox(
                   height: 150,
                   child: ListView(
-                    children: (locationSearch.isEmpty ? allLocations : filteredLocations)
+                    children: (locationSearch.isEmpty
+                            ? allLocations
+                            : filteredLocations)
                         .map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
                       final locName = data['name'] ?? 'بدون اسم';
@@ -171,10 +192,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         value: selectedLocations.contains(locId),
                         onChanged: (val) {
                           setState(() {
-                            if (val == true)
+                            if (val == true) {
                               selectedLocations.add(locId);
-                            else
+                            } else {
                               selectedLocations.remove(locId);
+                            }
                           });
                         },
                       );
@@ -184,10 +206,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _addEvent,
-                  child: const Text("إضافة الفعالية"),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       padding: const EdgeInsets.symmetric(vertical: 16)),
+                  child: const Text("إضافة الفعالية"),
                 ),
               ],
             ),
