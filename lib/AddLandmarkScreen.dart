@@ -1,3 +1,4 @@
+// testscreen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -56,7 +57,7 @@ Color get fieldTextColor => Theme.of(context).brightness == Brightness.dark
 
 Color get buttonColor => Theme.of(context).brightness == Brightness.dark
     ? Colors.orange.shade700
-    : Colors.teal;
+    : const Color.fromARGB(255, 236, 152, 28);
 
 Color get buttonTextColor => Colors.white; // نصوص الأزرار
 

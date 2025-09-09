@@ -1,5 +1,8 @@
+// AddEventScreen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'theme_provider.dart'; // استيراد البروفايدر
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -16,7 +19,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   DateTime? startDate;
   DateTime? endDate;
   String contactNumber = '';
-  String imageUrl = ''; // 🔹 متغير لرابط الصورة
+  String imageUrl = '';
   List<String> selectedLocations = [];
 
   List<QueryDocumentSnapshot> allLocations = [];
@@ -48,7 +51,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         'startDate': Timestamp.fromDate(startDate!),
         'endDate': Timestamp.fromDate(endDate!),
         'contactNumber': contactNumber,
-        'imageUrl': imageUrl, // 🔹 تخزين رابط الصورة
+        'imageUrl': imageUrl,
         'locationIds': selectedLocations,
       });
 
@@ -86,12 +89,15 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeProvider>(context); // الحصول على الثيم الحالي
+    final isDark = theme.isDark;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
           title: const Text("إضافة فعالية"),
-          backgroundColor: Colors.teal,
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),
@@ -100,23 +106,43 @@ class _AddEventScreenState extends State<AddEventScreen> {
             child: ListView(
               children: [
                 TextFormField(
-                  decoration: const InputDecoration(labelText: "اسم الفعالية"),
+                  decoration: InputDecoration(
+                    labelText: "اسم الفعالية",
+                    filled: true,
+                    fillColor: Theme.of(context)
+                        .inputDecorationTheme
+                        .fillColor, // يعتمد على الثيم
+                    border: Theme.of(context).inputDecorationTheme.border,
+                  ),
                   validator: (val) =>
                       val == null || val.isEmpty ? "مطلوب" : null,
                   onChanged: (val) => name = val,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
-                  decoration: const InputDecoration(labelText: "الوصف"),
+                  decoration: InputDecoration(
+                    labelText: "الوصف",
+                    filled: true,
+                    fillColor: Theme.of(context)
+                        .inputDecorationTheme
+                        .fillColor,
+                    border: Theme.of(context).inputDecorationTheme.border,
+                  ),
                   validator: (val) =>
                       val == null || val.isEmpty ? "مطلوب" : null,
                   onChanged: (val) => description = val,
                   maxLines: 3,
                 ),
                 const SizedBox(height: 10),
-                // 🔹 حقل رابط الصورة
                 TextFormField(
-                  decoration: const InputDecoration(labelText: "رابط الصورة"),
+                  decoration: InputDecoration(
+                    labelText: "رابط الصورة",
+                    filled: true,
+                    fillColor: Theme.of(context)
+                        .inputDecorationTheme
+                        .fillColor,
+                    border: Theme.of(context).inputDecorationTheme.border,
+                  ),
                   validator: (val) =>
                       val == null || val.isEmpty ? "مطلوب" : null,
                   onChanged: (val) => imageUrl = val,
@@ -134,6 +160,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
                                 .toLocal()
                                 .toString()
                                 .split(' ')[0]),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).elevatedButtonTheme.style
+                                  ?.backgroundColor
+                                  ?.resolve({}) ??
+                                  Theme.of(context).primaryColor,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -143,26 +176,43 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         child: Text(endDate == null
                             ? "تاريخ النهاية"
                             : endDate!.toLocal().toString().split(' ')[0]),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).elevatedButtonTheme.style
+                                  ?.backgroundColor
+                                  ?.resolve({}) ??
+                                  Theme.of(context).primaryColor,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
-                  decoration: const InputDecoration(labelText: "رقم للتواصل"),
+                  decoration: InputDecoration(
+                    labelText: "رقم للتواصل",
+                    filled: true,
+                    fillColor:
+                        Theme.of(context).inputDecorationTheme.fillColor,
+                    border: Theme.of(context).inputDecorationTheme.border,
+                  ),
                   validator: (val) =>
                       val == null || val.isEmpty ? "مطلوب" : null,
                   onChanged: (val) => contactNumber = val,
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 20),
-                const Text("اختر الأماكن السياحية للفعالية",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Text("اختر الأماكن السياحية للفعالية",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color)),
                 const SizedBox(height: 8),
                 TextField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: "ابحث عن مكان...",
-                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                    border: Theme.of(context).inputDecorationTheme.border,
                   ),
                   onChanged: (val) {
                     setState(() {
@@ -207,8 +257,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ElevatedButton(
                   onPressed: _addEvent,
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
+                    backgroundColor:
+                        Theme.of(context).elevatedButtonTheme.style
+                                ?.backgroundColor
+                                ?.resolve({}) ??
+                            Theme.of(context).primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                   child: const Text("إضافة الفعالية"),
                 ),
               ],

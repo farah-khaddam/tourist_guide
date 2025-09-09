@@ -27,7 +27,7 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: AppBar(
         title: const Text("الإعدادات"),
         backgroundColor: orangeColor,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
       ),
       body: ListView(
         children: [
@@ -87,7 +87,8 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           if (currentUser != null)
             ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
+              leading: Icon(Icons.logout, color: orangeColor),
+
               title: const Text("تسجيل الخروج"),
               onTap: () async {
                 await FirebaseAuth.instance.signOut();

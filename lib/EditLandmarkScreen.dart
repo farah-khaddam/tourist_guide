@@ -1,3 +1,4 @@
+// EditLandmarkScreen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'EditSingleLandmarkScreen.dart';
@@ -41,7 +42,7 @@ class _EditLandmarksScreenState extends State<EditLandmarksScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text("إدارة المعالم السياحية"),
-          backgroundColor: Colors.teal,
+          backgroundColor: const Color.fromARGB(255, 237, 159, 12),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -54,7 +55,7 @@ class _EditLandmarksScreenState extends State<EditLandmarksScreen> {
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color.fromARGB(255, 255, 245, 255),
                 ),
                 onChanged: (val) {
                   setState(() {
@@ -105,7 +106,7 @@ class _EditLandmarksScreenState extends State<EditLandmarksScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.blue),
+                                  icon: const Icon(Icons.edit, color: Color.fromARGB(255, 240, 153, 30)),
                                   onPressed: () {
                                     Navigator.push(
                                       context,
@@ -116,7 +117,7 @@ class _EditLandmarksScreenState extends State<EditLandmarksScreen> {
                                   },
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  icon: const Icon(Icons.delete, color: Color.fromARGB(255, 251, 126, 37)),
                                   onPressed: () => _deleteLandmark(doc.id, context),
                                 ),
                               ],

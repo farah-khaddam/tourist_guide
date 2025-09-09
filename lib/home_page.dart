@@ -11,6 +11,7 @@ import 'theme_provider.dart';
 import 'bookmark.dart';
 import 'EventsPage.dart';
 
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -113,12 +114,12 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(builder: (_) => const MapScreen()),
         );
         break;
-        case 3: // الفعاليات
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const EventsPage()),
-      );
-      break;
+      case 3: // الفعاليات
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const EventsPage()),
+        );
+        break;
       case 4:
         Navigator.push(
           context,
@@ -131,7 +132,7 @@ class _HomePageState extends State<HomePage> {
   void _showFilterChoiceDialog() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final bgColor = themeProvider.isDark
-        ? Colors.black
+        ? const Color.fromARGB(255, 5, 5, 5)
         : const Color(0xFFFFF5E1);
     final btnColor = themeProvider.isDark
         ? themeProvider.orangeDark
@@ -488,9 +489,15 @@ class _HomePageState extends State<HomePage> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "الرئيسية"),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: "بحث"),
-          BottomNavigationBarItem(icon: Icon(Icons.map_outlined),label: "الخريطة",),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map_outlined),
+            label: "الخريطة",
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.event), label: "الفعاليات"),
-          BottomNavigationBarItem(icon: Icon(Icons.settings),label: "الإعدادات",),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: "الإعدادات",
+          ),
         ],
       ),
     );
