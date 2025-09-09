@@ -10,6 +10,7 @@ import 'package:TRIPSY/admin_dashboard.dart';
 import 'theme_provider.dart';
 import 'bookmark.dart';
 import 'EventsPage.dart';
+import 'notifications_screen.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -310,8 +311,9 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("لا توجد إشعارات حالياً.")),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
               );
             },
             color: Colors.white,
@@ -352,9 +354,7 @@ class _HomePageState extends State<HomePage> {
                   if (!snapshot.hasData) return const SizedBox();
                   final data = snapshot.data!.data() as Map<String, dynamic>?;
                   if (data != null && data['isAdmin'] == true) {
-                    
-                    return 
-              IconButton(
+                    return IconButton(
                       icon: const Icon(Icons.admin_panel_settings),
                       onPressed: () {
                         Navigator.push(
@@ -427,6 +427,7 @@ class _HomePageState extends State<HomePage> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
                   onTap: () {
+                    print(doc.id);
                     Navigator.push(
                       context,
                       MaterialPageRoute(

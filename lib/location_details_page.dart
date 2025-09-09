@@ -186,15 +186,13 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     final userData = userDoc.data();
     final userName = userData?['name'] ?? 'مستخدم مجهول';
 
-    await FirebaseFirestore.instance
-        .collection('comment')
-        .add({
-          'userId': user.uid,
-          'username': userName, // 👈 إضافة الاسم
-          'locationId': widget.locationId,
-          'text': text,
-          'createdAt': Timestamp.now(),
-        });
+    await FirebaseFirestore.instance.collection('comment').add({
+      'userId': user.uid,
+      'username': userName, // 👈 إضافة الاسم
+      'locationId': widget.locationId,
+      'text': text,
+      'createdAt': Timestamp.now(),
+    });
 
     _commentController.clear();
   }
@@ -324,112 +322,118 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   }
 
   Widget _buildCommentsList() {
-  return StreamBuilder<QuerySnapshot>(
-    stream: FirebaseFirestore.instance
-        .collection('comment')
-        .where('locationId', isEqualTo: widget.locationId)
-        .orderBy('createdAt', descending: true)
-        .snapshots(),
-    builder: (context, snapshot) {
-      if (!snapshot.hasData) return const CircularProgressIndicator();
-      final comments = snapshot.data!.docs;
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('comment')
+          .where('locationId', isEqualTo: widget.locationId)
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const CircularProgressIndicator();
+        final comments = snapshot.data!.docs;
 
-      bool showAll = false; // للتحكم في عرض المزيد
-      int displayCount = comments.length > 2 ? 2 : comments.length;
+        bool showAll = false; // للتحكم في عرض المزيد
+        int displayCount = comments.length > 2 ? 2 : comments.length;
 
-      return StatefulBuilder(
-        builder: (context, setStateSB) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'التعليقات (${comments.length})',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...comments.take(showAll ? comments.length : displayCount).map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              final commentText = data['text'] ?? '';
-              final userName = data['username'] ?? 'مستخدم مجهول';
-              final timestamp = data['createdAt'] as Timestamp?;
-              final timeString = timestamp != null
-                  ? "${timestamp.toDate().day}/${timestamp.toDate().month}/${timestamp.toDate().year}"
-                  : '';
-
-              return Card(
-                color: cardColor,
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              userName,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              timeString,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              commentText,
-                              style: TextStyle(color: textColor),
-                              textAlign: TextAlign.right,
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (userId == data['userId'] || isAdmin)
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                          onPressed: () async {
-                            await FirebaseFirestore.instance
-                                .collection('comment')
-                                .doc(doc.id)
-                                .delete();
-                            setState(() {});
-                          },
-                        ),
-                    ],
-                  ),
+        return StatefulBuilder(
+          builder: (context, setStateSB) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'التعليقات (${comments.length})',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
                 ),
-              );
-            }).toList(),
-            if (comments.length > 2)
-              TextButton(
-                onPressed: () {
-                  setStateSB(() {
-                    showAll = !showAll;
-                  });
-                },
-                child: Text(showAll ? "عرض أقل" : "عرض المزيد"),
               ),
-            const SizedBox(height: 8),
-            _buildCommentBox(), // مربع إضافة تعليق
-          ],
-        ),
-      );
-    },
-  );
-}
+              const SizedBox(height: 8),
+              ...comments.take(showAll ? comments.length : displayCount).map((
+                doc,
+              ) {
+                final data = doc.data() as Map<String, dynamic>;
+                final commentText = data['text'] ?? '';
+                final userName = data['username'] ?? 'مستخدم مجهول';
+                final timestamp = data['createdAt'] as Timestamp?;
+                final timeString = timestamp != null
+                    ? "${timestamp.toDate().day}/${timestamp.toDate().month}/${timestamp.toDate().year}"
+                    : '';
+
+                return Card(
+                  color: cardColor,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                userName,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                timeString,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                commentText,
+                                style: TextStyle(color: textColor),
+                                textAlign: TextAlign.right,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (userId == data['userId'] || isAdmin)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                            onPressed: () async {
+                              await FirebaseFirestore.instance
+                                  .collection('comment')
+                                  .doc(doc.id)
+                                  .delete();
+                              setState(() {});
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+              if (comments.length > 2)
+                TextButton(
+                  onPressed: () {
+                    setStateSB(() {
+                      showAll = !showAll;
+                    });
+                  },
+                  child: Text(showAll ? "عرض أقل" : "عرض المزيد"),
+                ),
+              const SizedBox(height: 8),
+              _buildCommentBox(), // مربع إضافة تعليق
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -459,7 +463,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         } else if (data['imageUrl'] != null &&
             data['imageUrl'].toString().isNotEmpty)
           images = [data['imageUrl']];
-
+        print(images);
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Scaffold(
@@ -468,7 +472,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
               title: const Text('تفاصيل الموقع'),
               backgroundColor: primaryColor,
               foregroundColor: Colors.white,
-              centerTitle: true,
+              // centerTitle: true,
               actions: [
                 IconButton(
                   icon: Icon(
@@ -547,25 +551,25 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Text(
-                                  'تصنيف الموقع: ',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: textColor,
-                                  ),
+                          Row(
+                            children: [
+                              Text(
+                                'تصنيف الموقع: ',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
                                 ),
-                                Text(
-                                  data['type'] ?? 'غير محدد',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: textColor,
-                                  ),
+                              ),
+                              Text(
+                                data['type'] ?? 'غير محدد',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: textColor,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             'الوصف:',
@@ -581,25 +585,23 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                             style: TextStyle(fontSize: 16, color: textColor),
                           ),
                           const SizedBox(height: 12),
-                      Text(
-                        'طبيعة الطريق:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        data['terrain'] ?? 'غير محددة',
-                        style: TextStyle(fontSize: 16, color: textColor),
-                      ),
+                          Text(
+                            'طبيعة الطريق:',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            data['terrain'] ?? 'غير محددة',
+                            style: TextStyle(fontSize: 16, color: textColor),
+                          ),
                         ],
-                        
                       ),
                     ),
                   ),
-                  
 
                   const SizedBox(height: 16),
                   StreamBuilder<Map<String, dynamic>>(
