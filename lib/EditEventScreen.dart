@@ -1,3 +1,5 @@
+// EditEventScreen.dart
+import 'package:TRIPSY/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -134,7 +136,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text("تعديل الفعالية"),
-          backgroundColor: Colors.teal,
+          backgroundColor: AppTheme.orangeLight,
           actions: [
             IconButton(icon: const Icon(Icons.delete), onPressed: _deleteEvent),
           ],
@@ -240,7 +242,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
                 ElevatedButton(
                   onPressed: _saveChanges,
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
+                      backgroundColor: AppTheme.orangeLight,
                       padding: const EdgeInsets.symmetric(vertical: 16)),
                   child: const Text("حفظ التعديلات"),
                 ),

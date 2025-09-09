@@ -1,3 +1,5 @@
+// ManageEventsScreen.dart
+import 'package:TRIPSY/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'EditEventScreen.dart'; // صفحة تعديل الفعالية
@@ -33,7 +35,7 @@ class ManageEventsScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text("إدارة الفعاليات"),
-          backgroundColor: Colors.teal,
+          backgroundColor: AppTheme.orangeLight,
         ),
         body: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('event').snapshots(),
@@ -81,7 +83,7 @@ class ManageEventsScreen extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          icon: const Icon(Icons.edit, color: AppTheme.orangeLight),
                           onPressed: () {
                             Navigator.push(
                               context,
@@ -95,7 +97,7 @@ class ManageEventsScreen extends StatelessWidget {
                           },
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
+                          icon: const Icon(Icons.delete, color: AppTheme.orangeLight),
                           onPressed: () => _deleteEvent(doc.id, context),
                         ),
                       ],

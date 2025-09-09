@@ -1,3 +1,4 @@
+// EditSingleLandmarkScreen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -145,7 +146,7 @@ class _EditSingleLandmarkScreenState extends State<EditSingleLandmarkScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _terrainController,
-                  decoration: InputDecoration(labelText: 'الطبيعة/البيئة', filled: true, fillColor: fillColor, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                  decoration: InputDecoration(labelText: 'طبيعة الطريق ', filled: true, fillColor: fillColor, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                 ),
                 const SizedBox(height: 16),
                 Row(

@@ -1,4 +1,4 @@
-// testscreen.dart
+// AddLandmarkScreen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -290,7 +290,7 @@ Color get buttonTextColor => Colors.white; // نصوص الأزرار
                   child: TextFormField(
                     controller: _terrainController,
                     decoration: InputDecoration(
-                      labelText: 'الطبيعة/البيئة',
+                      labelText: 'طبيعة الطريق',
                       filled: true,
                       fillColor: fillColor,
                       border: OutlineInputBorder(
