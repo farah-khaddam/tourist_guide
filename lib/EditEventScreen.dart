@@ -23,6 +23,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   DateTime? startDate;
   DateTime? endDate;
   late String contactNumber;
+  late String imageUrl; // 🔹 حقل رابط الصورة
   List<String> selectedLocations = [];
 
   List<QueryDocumentSnapshot> allLocations = [];
@@ -38,8 +39,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
     name = data['name'] ?? '';
     description = data['description'] ?? '';
     contactNumber = data['contactNumber'] ?? '';
+    imageUrl = data['imageUrl'] ?? ''; // 🔹 تهيئة رابط الصورة
 
-    // التحقق من التواريخ بشكل آمن
+    // التحقق من التواريخ
     if (data.containsKey('startDate') && data['startDate'] != null) {
       if (data['startDate'] is Timestamp) startDate = (data['startDate'] as Timestamp).toDate();
       else if (data['startDate'] is DateTime) startDate = data['startDate'];
@@ -78,32 +80,32 @@ class _EditEventScreenState extends State<EditEventScreen> {
   }
 
   Future<void> _saveChanges() async {
-  if (_formKey.currentState!.validate() && startDate != null && endDate != null) {
-    final updatedData = {
-      'name': name,
-      'description': description,
-      'startDate': Timestamp.fromDate(startDate!), // تحويل التاريخ لـ Timestamp
-      'endDate': Timestamp.fromDate(endDate!),     // تحويل التاريخ لـ Timestamp
-      'contactNumber': contactNumber,
-      'locationIds': selectedLocations,
-    };
+    if (_formKey.currentState!.validate() && startDate != null && endDate != null) {
+      final updatedData = {
+        'name': name,
+        'description': description,
+        'startDate': Timestamp.fromDate(startDate!),
+        'endDate': Timestamp.fromDate(endDate!),
+        'contactNumber': contactNumber,
+        'locationIds': selectedLocations,
+        'imageUrl': imageUrl, // 🔹 حفظ رابط الصورة
+      };
 
-    await FirebaseFirestore.instance
-        .collection('event')
-        .doc(widget.eventId)
-        .update(updatedData);
+      await FirebaseFirestore.instance
+          .collection('event')
+          .doc(widget.eventId)
+          .update(updatedData);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("تم تعديل الفعالية بنجاح!")),
-    );
-    Navigator.pop(context);
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("الرجاء ملء جميع الحقول واختيار التواريخ.")),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("تم تعديل الفعالية بنجاح!")),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("الرجاء ملء جميع الحقول واختيار التواريخ.")),
+      );
+    }
   }
-}
-
 
   Future<void> _deleteEvent() async {
     final confirm = await showDialog<bool>(
@@ -160,6 +162,17 @@ class _EditEventScreenState extends State<EditEventScreen> {
                   maxLines: 3,
                 ),
                 const SizedBox(height: 10),
+
+                // 🔹 حقل رابط الصورة فقط
+                TextFormField(
+                  initialValue: imageUrl,
+                  decoration: const InputDecoration(labelText: "رابط الصورة"),
+                  validator: (val) => val == null || val.isEmpty ? "مطلوب" : null,
+                  onChanged: (val) => imageUrl = val,
+                  keyboardType: TextInputType.url,
+                ),
+                const SizedBox(height: 10),
+
                 Row(
                   children: [
                     Expanded(
