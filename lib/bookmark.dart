@@ -61,13 +61,10 @@ class _BookmarkPageState extends State<BookmarkPage> {
               );
             }
 
-            // جمع جميع IDs للمواقع
             final locationIds = bookmarks
                 .map((b) => (b.data() as Map<String, dynamic>)['locationId'] as String)
                 .toList();
 
-            // Firebase whereIn يقبل حتى 10–30 ID فقط
-            // لذا إذا أكثر من ذلك يجب تقسيمها. هنا نفترض العدد قليل.
             return FutureBuilder<QuerySnapshot>(
               future: FirebaseFirestore.instance
                   .collection('location')
@@ -102,11 +99,37 @@ class _BookmarkPageState extends State<BookmarkPage> {
                       final locationId = bookmark['locationId'] ?? '';
 
                       final locationData = locationsMap[locationId];
-                      if (locationData == null) return const SizedBox();
 
-                      final name = locationData['name'] ?? 'بدون اسم';
-                      final governorate = locationData['governorate'] ?? '';
-                      final imageUrl = locationData['imageUrl'] ?? '';
+                      // ✅ ناخد البيانات من location أو bookmark إذا ناقصة
+                      final name = (locationData != null && locationData['name'] != null)
+                          ? locationData['name']
+                          : (bookmark['name'] ?? 'بدون اسم');
+
+                      final governorate = (locationData != null && locationData['governorate'] != null)
+                          ? locationData['governorate']
+                          : (bookmark['governorate'] ?? '');
+
+                      // ✅ جلب الصورة من images أو imageUrl
+                      String imageUrl = '';
+                      if (locationData != null &&
+                          locationData['images'] != null &&
+                          locationData['images'] is List &&
+                          locationData['images'].isNotEmpty) {
+                        imageUrl = locationData['images'][0];
+                      } else if (bookmark['images'] != null &&
+                          bookmark['images'] is List &&
+                          bookmark['images'].isNotEmpty) {
+                        imageUrl = bookmark['images'][0];
+                      } else if (locationData != null &&
+                          locationData['imageUrl'] != null) {
+                        imageUrl = locationData['imageUrl'];
+                      } else if (bookmark['imageUrl'] != null) {
+                        imageUrl = bookmark['imageUrl'];
+                      }
+
+                      if (name == null && governorate == null && imageUrl == null) {
+                        return const SizedBox();
+                      }
 
                       return Card(
                         margin: const EdgeInsets.symmetric(

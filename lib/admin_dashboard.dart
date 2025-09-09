@@ -18,9 +18,7 @@ class AdminDashboard extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          title: const Text("لوحة تحكم الأدمن"),
-        ),
+        appBar: AppBar(title: const Text("لوحة تحكم الأدمن")),
         body: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -32,7 +30,9 @@ class AdminDashboard extends StatelessWidget {
                   foregroundColor: theme.colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -52,7 +52,9 @@ class AdminDashboard extends StatelessWidget {
                   foregroundColor: theme.colorScheme.onSecondary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -72,7 +74,9 @@ class AdminDashboard extends StatelessWidget {
                   foregroundColor: theme.colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -92,7 +96,9 @@ class AdminDashboard extends StatelessWidget {
                   foregroundColor: theme.colorScheme.onSecondary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: () {
                   Navigator.push(
