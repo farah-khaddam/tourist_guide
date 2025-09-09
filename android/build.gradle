@@ -1,3 +1,14 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // لو مشروعك يستخدم AGP 8+، غالبًا Flutter يضبط نسخة الـ AGP بنفسه.
+        // ما في داعي تغيّرها هون.
+        classpath 'com.google.gms:google-services:4.4.2' // ضروري لـ Firebase
+    }
+}
 allprojects {
     repositories {
         google()

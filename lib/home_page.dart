@@ -351,7 +351,9 @@ class _HomePageState extends State<HomePage> {
                   if (!snapshot.hasData) return const SizedBox();
                   final data = snapshot.data!.data() as Map<String, dynamic>?;
                   if (data != null && data['isAdmin'] == true) {
-                    return IconButton(
+                    
+                    return 
+              IconButton(
                       icon: const Icon(Icons.admin_panel_settings),
                       onPressed: () {
                         Navigator.push(
