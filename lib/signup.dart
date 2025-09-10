@@ -62,6 +62,7 @@ class _SignUpPageState extends State<SignUpPage> {
         const SnackBar(content: Text("تم إنشاء الحساب بنجاح 🎉")),
       );
       Navigator.pop(context);
+      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'weak-password') {
