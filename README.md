@@ -60,5 +60,5 @@ flutter run
 
 ##  Contributors
 - Farah Khaddam https://github.com/farah-khaddam
-- Aalaa Ayrout
+- Aalaa Ayrout https://github.com/alaaayrout
 - Farah ghalawanji https://github.com/farah-ghalawanji
