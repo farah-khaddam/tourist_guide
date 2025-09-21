@@ -43,14 +43,16 @@ flutter run
 ---
 ##  Screenshots
 ### صفحة تسجيل الدخول
-![Login Screen](assets/images/LoginScreen_Screenshot.jpg)
+<img src="assets/images/LoginScreen_Screenshot.jpg" alt="Login Screen" width="200"/>
 
 ### الصفحة الرئيسية
-![Home Screen](assets/images/homeScreen_Screenshot.jpg)
+
+<img src="assets/images/homeScreen_Screenshot.jpg" alt="Home Screen" width="200"/>
 
 ### الخريطة
 
-![Map Screen](assets/images/mapScreen_Screeshot.jpg)
+
+<img src="assets/images/mapScreen_Screeshot.jpg" alt="Map Screen" width="200"/>
 
 ---
 
