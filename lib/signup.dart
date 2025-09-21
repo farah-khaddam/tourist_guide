@@ -1,3 +1,4 @@
+// signup.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -61,6 +62,7 @@ class _SignUpPageState extends State<SignUpPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("تم إنشاء الحساب بنجاح 🎉")),
       );
+      Navigator.pop(context);
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       String message = '';

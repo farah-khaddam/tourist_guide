@@ -2,7 +2,7 @@
 import 'package:TRIPSY/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'EditEventScreen.dart'; // صفحة تعديل الفعالية
+import 'EditEventScreen.dart'; 
 
 class ManageEventsScreen extends StatelessWidget {
   const ManageEventsScreen({super.key});
@@ -58,7 +58,7 @@ class ManageEventsScreen extends StatelessWidget {
                 final data = doc.data() as Map<String, dynamic>;
                 final name = data['name'] ?? "بدون اسم";
 
-                // التواريخ مع التحقق من null
+               
                 final startDate = data['startDate'] != null
                     ? (data['startDate'] as Timestamp).toDate()
                     : null;

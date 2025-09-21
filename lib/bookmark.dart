@@ -100,7 +100,6 @@ class _BookmarkPageState extends State<BookmarkPage> {
 
                       final locationData = locationsMap[locationId];
 
-                      // ✅ ناخد البيانات من location أو bookmark إذا ناقصة
                       final name = (locationData != null && locationData['name'] != null)
                           ? locationData['name']
                           : (bookmark['name'] ?? 'بدون اسم');
@@ -109,7 +108,7 @@ class _BookmarkPageState extends State<BookmarkPage> {
                           ? locationData['governorate']
                           : (bookmark['governorate'] ?? '');
 
-                      // ✅ جلب الصورة من images أو imageUrl
+                    
                       String imageUrl = '';
                       if (locationData != null &&
                           locationData['images'] != null &&

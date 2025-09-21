@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'theme_provider.dart'; // استيراد البروفايدر
+import 'theme_provider.dart'; 
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -89,7 +89,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Provider.of<ThemeProvider>(context); // الحصول على الثيم الحالي
+    final theme = Provider.of<ThemeProvider>(context); 
     final isDark = theme.isDark;
 
     return Directionality(
@@ -111,7 +111,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     filled: true,
                     fillColor: Theme.of(context)
                         .inputDecorationTheme
-                        .fillColor, // يعتمد على الثيم
+                        .fillColor, 
                     border: Theme.of(context).inputDecorationTheme.border,
                   ),
                   validator: (val) =>

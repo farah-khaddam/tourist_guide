@@ -25,7 +25,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
   DateTime? startDate;
   DateTime? endDate;
   late String contactNumber;
-  late String imageUrl; // 🔹 حقل رابط الصورة
+  late String imageUrl; 
   List<String> selectedLocations = [];
 
   List<QueryDocumentSnapshot> allLocations = [];
@@ -41,9 +41,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
     name = data['name'] ?? '';
     description = data['description'] ?? '';
     contactNumber = data['contactNumber'] ?? '';
-    imageUrl = data['imageUrl'] ?? ''; // 🔹 تهيئة رابط الصورة
+    imageUrl = data['imageUrl'] ?? ''; 
 
-    // التحقق من التواريخ
+    
     if (data.containsKey('startDate') && data['startDate'] != null) {
       if (data['startDate'] is Timestamp) startDate = (data['startDate'] as Timestamp).toDate();
       else if (data['startDate'] is DateTime) startDate = data['startDate'];
@@ -90,7 +90,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
         'endDate': Timestamp.fromDate(endDate!),
         'contactNumber': contactNumber,
         'locationIds': selectedLocations,
-        'imageUrl': imageUrl, // 🔹 حفظ رابط الصورة
+        'imageUrl': imageUrl, 
       };
 
       await FirebaseFirestore.instance
@@ -165,7 +165,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // 🔹 حقل رابط الصورة فقط
                 TextFormField(
                   initialValue: imageUrl,
                   decoration: const InputDecoration(labelText: "رابط الصورة"),

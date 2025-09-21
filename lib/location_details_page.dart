@@ -38,7 +38,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     }
   }
 
-  // ألوان حسب الوضع
+ 
   Color get backgroundColor => Theme.of(context).brightness == Brightness.dark
       ? Colors.black
       : const Color(0xFFFFF5E1);
@@ -137,7 +137,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                 MaterialPageRoute(
                   builder: (_) => LogOrSign(
                     redirectPage: () {
-                      // بعد تسجيل الدخول مباشرة
+                   
                       final user = FirebaseAuth.instance.currentUser;
                       if (user != null) {
                         setState(() {
@@ -149,7 +149,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('أهلاً بك! 😊 لقد سجلت الدخول بنجاح.'),
+                          content: Text('أهلاً بك  لقد سجلت الدخول بنجاح.'),
                           duration: Duration(seconds: 2),
                         ),
                       );
@@ -178,7 +178,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    // جلب بيانات المستخدم من كولكشن user
+    
     final userDoc = await FirebaseFirestore.instance
         .collection('user')
         .doc(user.uid)
@@ -188,7 +188,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
 
     await FirebaseFirestore.instance.collection('comment').add({
       'userId': user.uid,
-      'username': userName, // 👈 إضافة الاسم
+      'username': userName, 
       'locationId': widget.locationId,
       'text': text,
       'createdAt': Timestamp.now(),
@@ -332,7 +332,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
         if (!snapshot.hasData) return const CircularProgressIndicator();
         final comments = snapshot.data!.docs;
 
-        bool showAll = false; // للتحكم في عرض المزيد
+        bool showAll = false; 
         int displayCount = comments.length > 2 ? 2 : comments.length;
 
         return StatefulBuilder(
@@ -427,7 +427,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                   child: Text(showAll ? "عرض أقل" : "عرض المزيد"),
                 ),
               const SizedBox(height: 8),
-              _buildCommentBox(), // مربع إضافة تعليق
+              _buildCommentBox(), 
             ],
           ),
         );
@@ -472,7 +472,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
               title: const Text('تفاصيل الموقع'),
               backgroundColor: primaryColor,
               foregroundColor: Colors.white,
-              // centerTitle: true,
+            
               actions: [
                 IconButton(
                   icon: Icon(
@@ -483,12 +483,11 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
                     final user = FirebaseAuth.instance.currentUser;
 
                     if (user == null) {
-                      // المستخدم غير مسجل دخول → عرض مربع حوار
+                   
                       _showLoginDialog();
                       return;
                     }
 
-                    // المستخدم مسجل دخول → حفظ أو إزالة
                     String message;
                     if (isSaved) {
                       await removeBookmark(user.uid, widget.locationId);
@@ -500,7 +499,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
 
                     setState(() => isSaved = !isSaved);
 
-                    // إظهار Snackbar
+                  
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(message),
@@ -704,7 +703,7 @@ class _LocationDetailsPageState extends State<LocationDetailsPage> {
   }
 }
 
-// Carousel
+
 class ImageCarousel extends StatefulWidget {
   final List<String> images;
   final Color primaryColor;
@@ -785,8 +784,6 @@ class _ImageCarouselState extends State<ImageCarousel> {
     );
   }
 }
-
-// Full screen view
 class FullImageView extends StatefulWidget {
   final List<String> images;
   final int initialIndex;

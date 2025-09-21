@@ -31,11 +31,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   } catch (_) {}
 }
 
-// Flutter Local Notifications instance
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-// Global navigator key to enable navigation from notification handlers
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> _initializeLocalNotifications() async {
@@ -66,7 +65,7 @@ Future<void> _initializeLocalNotifications() async {
 
 Future<void> _createDefaultNotificationChannel() async {
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'default_channel', // نفس id الموجود في AndroidManifest.xml
+    'default_channel', 
     'Default Notifications',
     description: 'Used for default notifications',
     importance: Importance.high,
@@ -99,7 +98,7 @@ Future<void> _initFcmToken() async {
   }
 }
 
-// ✅ إضافة listener لعرض الإشعارات في foreground
+
 void setupForegroundNotificationListener() {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     print('Got a message in foreground: ${message.notification?.title}');
@@ -111,7 +110,7 @@ void setupForegroundNotificationListener() {
             'Default Notifications',
             channelDescription: 'Used for default notifications',
             importance: Importance.high,
-            // priority: Priority.high,
+         
             playSound: true,
           );
 
@@ -120,7 +119,7 @@ void setupForegroundNotificationListener() {
       );
 
       try {
-        // Save to local storage
+   
         final AppNotification appNotif = AppNotification.fromFcmData(
           id:
               (message.messageId ??
@@ -147,14 +146,14 @@ void setupForegroundNotificationListener() {
   });
 }
 
-// Navigate to the appropriate screen based on payload
+
 void _handleNotificationNavigation(Map<String, dynamic> data) {
   try {
     final String? type = (data['type'] ?? data['notification_type'])
         ?.toString();
     final String? id = (data['id'] ?? data['target_id'])?.toString();
 
-    if (type == null) return; // plain notification: no navigation
+    if (type == null) return; 
 
     if ((type == 'location' || type == 'place') &&
         id != null &&
@@ -185,16 +184,15 @@ void main() async {
   await _initializeLocalNotifications();
   await _createDefaultNotificationChannel();
 
-  // ✅ طلب صلاحيات الإشعارات
+ 
   requestPermission();
 
-  // ✅ جلب token
+
   await _initFcmToken();
 
-  // ✅ تفعيل استقبال الإشعارات foreground
+  
   setupForegroundNotificationListener();
 
-  // ✅ التنقل عند الضغط على الإشعار من الخلفية
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     try {
       final AppNotification appNotif = AppNotification.fromFcmData(
@@ -211,7 +209,7 @@ void main() async {
     _handleNotificationNavigation(message.data);
   });
 
-  // ✅ معالجة فتح التطبيق عبر إشعار (terminated)
+  
   final RemoteMessage? initialMessage = await FirebaseMessaging.instance
       .getInitialMessage();
   final Map<String, dynamic>? initialData = initialMessage?.data;

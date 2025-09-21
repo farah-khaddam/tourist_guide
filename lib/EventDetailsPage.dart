@@ -1,3 +1,4 @@
+// EventDetailsPage.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
@@ -24,7 +25,7 @@ class EventDetailsPage extends StatelessWidget {
     final cardColor = themeProvider.isDark ? Colors.grey.shade900 : Colors.white;
 
     return Directionality(
-      textDirection: TextDirection.rtl, // جعل الصفحة من اليمين لليسار
+      textDirection: TextDirection.rtl, 
       child: Scaffold(
         backgroundColor: bgColor,
         appBar: AppBar(
@@ -55,8 +56,7 @@ class EventDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // صور الفعالية
-                  // صورة الفعالية الرئيسية
+               
                       if (imageUrl.isNotEmpty)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
@@ -78,7 +78,7 @@ class EventDetailsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
 
-                  // بطاقة اسم الفعالية
+                
                   Card(
                     color: cardColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -92,7 +92,7 @@ class EventDetailsPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // بطاقة التواريخ
+        
                   if (startDate != null && endDate != null)
                     Card(
                       color: cardColor,
@@ -129,7 +129,7 @@ class EventDetailsPage extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 8),
-                  // بطاقة الوصف
+                 
                   Card(
                     color: cardColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -143,7 +143,7 @@ class EventDetailsPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // بطاقة رقم الاتصال
+                 
                   if (contactNumber.isNotEmpty)
                     Card(
                       color: cardColor,
@@ -158,7 +158,7 @@ class EventDetailsPage extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 12),
-                  // بطاقة المواقع المرتبطة
+                 
                   if (locationIds.isNotEmpty)
                     Card(
                       color: cardColor,

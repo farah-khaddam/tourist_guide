@@ -208,7 +208,7 @@ Color get buttonTextColor => Colors.white; // نصوص الأزرار
                       decoration: InputDecoration(
                         fillColor: fieldFillColor,             // خلفية الحقل
                         border: OutlineInputBorder(
-                          borderSide: BorderSide(color: buttonColor), // لون الحدود
+                          borderSide: BorderSide(color: buttonColor), 
                         ),
                       labelText: 'اسم المعلم',
                       filled: true,
@@ -217,7 +217,7 @@ Color get buttonTextColor => Colors.white; // نصوص الأزرار
                         value!.isEmpty ? 'لا يمكن أن يكون الحقل فارغ' : null,
                   ),
                 ),
-                // الوصف
+              
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: TextFormField(
@@ -235,7 +235,7 @@ Color get buttonTextColor => Colors.white; // نصوص الأزرار
                         value!.isEmpty ? 'لا يمكن أن يكون الحقل فارغ' : null,
                   ),
                 ),
-                // المحافظة Dropdown
+      
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: DropdownButtonFormField<String>(
@@ -260,7 +260,7 @@ Color get buttonTextColor => Colors.white; // نصوص الأزرار
                         value == null ? 'اختر المحافظة' : null,
                   ),
                 ),
-                // النوع / التصنيف Dropdown
+              
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: DropdownButtonFormField<String>(
@@ -284,7 +284,7 @@ Color get buttonTextColor => Colors.white; // نصوص الأزرار
                     validator: (value) => value == null ? 'اختر التصنيف' : null,
                   ),
                 ),
-                // الطبيعة / البيئة
+             
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: TextFormField(
@@ -300,7 +300,7 @@ Color get buttonTextColor => Colors.white; // نصوص الأزرار
                     ),
                   ),
                 ),
-                // الإحداثيات
+              
                 Row(
                   children: [
                     Expanded(
@@ -339,7 +339,7 @@ Color get buttonTextColor => Colors.white; // نصوص الأزرار
                   ],
                 ),
                 const SizedBox(height: 16),
-                // روابط الصور
+               
                 const Text('روابط الصور:', style: TextStyle(fontWeight: FontWeight.bold)),
                 ..._imageControllers.asMap().entries.map((entry) {
                   final index = entry.key;

@@ -2,16 +2,16 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // ألوان لايت
-  static const Color orangeLight = Color(0xFFFF9800); // برتقالي هادئ
-  static const Color beigeLight = Color(0xFFF5F5DC);  // بيج هادئ
 
-  // ألوان دارك
-  static const Color orangeDark = Color(0xFFFF6F00); // برتقالي غامق
-  static const Color blackDark = Color(0xFF121212);  // أسود غامق
-  static const Color greyDark = Color(0xFF1E1E1E);   // رمادي غامق للحقول
+  static const Color orangeLight = Color(0xFFFF9800); 
+  static const Color beigeLight = Color(0xFFF5F5DC);  
 
-  // ثيم لايت
+
+  static const Color orangeDark = Color(0xFFFF6F00); 
+  static const Color blackDark = Color(0xFF121212); 
+  static const Color greyDark = Color(0xFF1E1E1E);   
+
+ 
   static ThemeData lightTheme = ThemeData(
     scaffoldBackgroundColor: beigeLight,
     primaryColor: orangeLight,
@@ -64,7 +64,7 @@ class AppTheme {
     ),
   );
 
-  // ثيم دارك
+ 
   static ThemeData darkTheme = ThemeData(
     scaffoldBackgroundColor: blackDark,
     primaryColor: orangeDark,

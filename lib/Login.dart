@@ -9,9 +9,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 
 class LogOrSign extends StatefulWidget {
-  final VoidCallback? redirectPage; // <-- أضفنا هذا
+  final VoidCallback? redirectPage; 
 
-  const LogOrSign({super.key, this.redirectPage}); // <-- عدّل الكونستركتور
+  const LogOrSign({super.key, this.redirectPage}); 
 
   @override
   _LogOrSignState createState() => _LogOrSignState();
@@ -31,7 +31,7 @@ Future<void> _loginWithGoogle() async {
 
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) {
-      // المستخدم لغى العملية
+      
       setState(() => _isLoading = false);
       return;
     }
@@ -45,8 +45,7 @@ Future<void> _loginWithGoogle() async {
 
     await _auth.signInWithCredential(credential);
 
-    // (اختياري) إنشاء وثيقة للمستخدم في Firestore إذا ما كانت موجودة
-    // حتى تقدر تجيب "name" لاحقاً للكومنتات
+  
     try {
       final u = _auth.currentUser;
       if (u != null) {
@@ -68,7 +67,7 @@ Future<void> _loginWithGoogle() async {
       const SnackBar(content: Text("تم تسجيل الدخول بحساب Google 🎉")),
     );
 
-    // نفس منطق الإرجاع يلي عملتو بتسجيل الإيميل/كلمة السر
+   
     if (widget.redirectPage != null) {
       widget.redirectPage!();
     } else {
@@ -104,15 +103,8 @@ Future<void> _loginWithGoogle() async {
       );
 
       Navigator.pop(context, true);
-      // استدعاء دالة إعادة التوجيه إذا موجودة
-      //if (widget.redirectPage != null) {
-       // widget.redirectPage!();
-      //} else {
-        //Navigator.pop(context);
-        // توجيه افتراضي للصفحة الرئيسية
-        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomePage()));
-      //} 
     
+ 
       
 
     } on FirebaseAuthException catch (e) {

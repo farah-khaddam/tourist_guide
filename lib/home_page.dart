@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
         _showSearchDialog();
         break;
       case 2:
-        // أول ما يضغط على الخريطة، نظهر رسالة توضيحية 5 ثواني
+     
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("يمكنك اختيار المسافة للمواقع القريبة من الاعلى"),
@@ -115,7 +115,7 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(builder: (_) => const MapScreen()),
         );
         break;
-      case 3: // الفعاليات
+      case 3: 
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const EventsPage()),
@@ -319,13 +319,12 @@ class _HomePageState extends State<HomePage> {
             color: Colors.white,
           ),
 
-          // 👈 استخدم StreamBuilder لتحديث أيقونة البوك مارك تلقائيًا
           StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, snapshot) {
               final user = snapshot.data;
               if (user == null) {
-                return const SizedBox(); // لا تظهر الأيقونة إذا لم يسجل الدخول
+                return const SizedBox(); 
               }
               return IconButton(
                 icon: const Icon(Icons.bookmark),
@@ -402,7 +401,7 @@ class _HomePageState extends State<HomePage> {
           return GridView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3, // 3 معالم بكل صف
+              crossAxisCount: 3, // 
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               childAspectRatio: 2 / 3,

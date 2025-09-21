@@ -1,13 +1,14 @@
+// EventsPage.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
-import 'EventDetailsPage.dart'; // صفحة التفاصيل
+import 'EventDetailsPage.dart'; 
 
 class EventsPage extends StatelessWidget {
   const EventsPage({super.key});
 
-  // دالة لتنسيق التاريخ yyyy/MM/dd
+  
   String formatDate(DateTime date) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     String year = date.year.toString();
@@ -93,7 +94,7 @@ class EventsPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // صورة الفعالية
+                      
                       Expanded(
                         child: ClipRRect(
                           borderRadius: const BorderRadius.vertical(

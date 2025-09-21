@@ -25,8 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
     {"image": "assets/images/c.png", "text": "من الجبال إلى البحر"},
     {"image": "assets/images/l.png", "text": "كل المعالم بين يديك بدليل واحد"},
   ];
-
-  int _currentIndex = 0;
+int _currentIndex = 0;
 
   void _nextSlide() {
     if (_currentIndex < slides.length - 1) {
@@ -34,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
         _currentIndex++;
       });
     } else {
-      // الانتقال مباشرة لصفحة HomePage بعد آخر سلايد
+     
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
@@ -49,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // صورة مع تأثير تلاشي فقط
+  
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 800),
               transitionBuilder: (child, animation) {
@@ -66,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 30),
 
-            // النص المتحرك
+          
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: DefaultTextStyle(
@@ -77,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   height: 1.5,
                 ),
                 child: AnimatedTextKit(
-                  key: ValueKey(_currentIndex), // إعادة البناء عند تغيير الشريحة
+                  key: ValueKey(_currentIndex), 
                   isRepeatingAnimation: false,
                   onFinished: _nextSlide,
                   animatedTexts: [

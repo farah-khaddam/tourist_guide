@@ -25,8 +25,8 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _pickedLocation;
   double zoom = 13.0;
 
-  double? filterDistanceKm; // null = كل المعالم
-  List<Map<String, dynamic>> allMarkersData = []; // تحميل المعالم مرة واحدة
+  double? filterDistanceKm; 
+  List<Map<String, dynamic>> allMarkersData = []; 
 
   @override
   void initState() {
